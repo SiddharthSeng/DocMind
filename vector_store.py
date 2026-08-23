@@ -2,9 +2,15 @@ import json
 import chromadb
 from chromadb.utils import embedding_functions
 
-# A sentence-transformers embedding function using all-MiniLM-L6-v2
-# ChromaDB has a convenient built-in wrapper that automatically downloads and uses this model.
-embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
+# A retrieval-optimized embedding model running locally via Ollama.
+# nomic-embed-text is specifically trained for RAG and handles semantic paraphrasing well.
+embedding_function = embedding_functions.OllamaEmbeddingFunction(
+    url="http://localhost:11434/api/embeddings",
+    model_name="nomic-embed-text",
+)
+# Ollama local inference can sometimes exceed the default 5-second httpx timeout, so we increase it
+import httpx
+embedding_function._session = httpx.Client(timeout=120)
 
 class VectorStore:
     def __init__(self, persist_directory: str = "./chroma_db", collection_name: str = "rag_documents"):
@@ -26,7 +32,7 @@ class VectorStore:
         # the magnitude (length) and only cares about the direction. In NLP, the direction 
         # represents the semantic meaning. Because RAG is about capturing the semantic intent 
         # regardless of document length, Cosine Similarity is the industry standard for text matching.
-        # Note: all-MiniLM-L6-v2 outputs normalized vectors, so Cosine Similarity mathematically 
+        # Note: nomic-embed-text outputs normalized vectors, so Cosine Similarity mathematically 
         # becomes equivalent to the Inner Product, making it very fast to compute!
         #
         # Here we tell ChromaDB to use Cosine distance (which is 1 - Cosine Similarity).

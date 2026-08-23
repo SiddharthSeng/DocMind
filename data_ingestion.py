@@ -122,8 +122,8 @@ if __name__ == "__main__":
     # Settings for our RAG ingestion
     DOCS_FOLDER = "docs"
     OUTPUT_JSON = "processed_chunks.json"
-    CHUNK_SIZE = 500
-    OVERLAP_SIZE = 50
+    CHUNK_SIZE = 150
+    OVERLAP_SIZE = 30
     
     # Create the docs folder if it doesn't exist so you can easily drop files in it
     os.makedirs(DOCS_FOLDER, exist_ok=True)

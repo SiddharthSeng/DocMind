@@ -52,13 +52,22 @@ OLLAMA_BASE_URL = "http://localhost:11434"  # default Ollama endpoint
 DEFAULT_MODEL   = "llama3.1"   # change to any model you have pulled
 
 # Chunks whose cosine similarity is below this threshold are dropped before
-# they reach the prompt.  Tune this based on your embedding model's score
-# distribution (print similarity scores during dev to calibrate).
-MIN_SIMILARITY_THRESHOLD = 0.2
+# they reach the prompt.
+#
+# INTERIM VALUE — calibrated for nomic-embed-text (switched from all-MiniLM-L6-v2).
+# Empirical basis from 2 test queries:
+#   - Completely unrelated content (e.g. Paris weather vs SLA) scored ~0.38.
+#   - Topically adjacent but wrong-document chunks scored 0.50–0.57.
+#   - 0.45 sits cleanly in the gap between true noise and any topically-connected content.
+# Replace this value once test_cases.json calibration is complete (8-10 queries
+# including intentionally irrelevant ones against nomic-embed-text scores).
+MIN_SIMILARITY_THRESHOLD = 0.45
 
 # If ALL chunks are below this threshold we return early without calling the
 # LLM at all — there's genuinely nothing useful to ground an answer on.
-ABSTAIN_THRESHOLD = 0.1
+# INTERIM VALUE — scaled proportionally with MIN_SIMILARITY_THRESHOLD above.
+# Recalibrate alongside MIN_SIMILARITY_THRESHOLD once test_cases.json is ready.
+ABSTAIN_THRESHOLD = 0.35
 
 
 # ---------------------------------------------------------------------------
