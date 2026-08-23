@@ -49,7 +49,7 @@ import requests  # pip install requests  (already lightweight, no extra SDK need
 # ---------------------------------------------------------------------------
 
 OLLAMA_BASE_URL = "http://localhost:11434"  # default Ollama endpoint
-DEFAULT_MODEL   = "llama3.1:8b-instruct"   # change to any model you have pulled
+DEFAULT_MODEL   = "llama3.1"   # change to any model you have pulled
 
 # Chunks whose cosine similarity is below this threshold are dropped before
 # they reach the prompt.  Tune this based on your embedding model's score
