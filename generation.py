@@ -54,11 +54,11 @@ DEFAULT_MODEL   = "llama3.1"   # change to any model you have pulled
 # Chunks whose cosine similarity is below this threshold are dropped before
 # they reach the prompt.  Tune this based on your embedding model's score
 # distribution (print similarity scores during dev to calibrate).
-MIN_SIMILARITY_THRESHOLD = 0.30
+MIN_SIMILARITY_THRESHOLD = 0.2
 
 # If ALL chunks are below this threshold we return early without calling the
 # LLM at all — there's genuinely nothing useful to ground an answer on.
-ABSTAIN_THRESHOLD = 0.20
+ABSTAIN_THRESHOLD = 0.1
 
 
 # ---------------------------------------------------------------------------
