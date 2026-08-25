@@ -245,21 +245,35 @@ def _strip_sources_section(llm_response: str) -> str:
 
 def _compute_confidence(chunks: list[dict]) -> float:
     """
-    Derives a confidence score (0.0-1.0) from retrieval similarity scores,
-    NOT from the LLM's self-assessment.
+    Derives a confidence score (0.0-1.0) from the raw cosine similarity
+    (embed_score) of the retrieved chunks, NOT from the LLM's self-assessment
+    and NOT from the RRF-fused score.
 
-    Why this matters: LLMs are poorly calibrated -- a model that is making
-    something up often expresses just as much confidence as one that isn't.
-    Similarity scores from the embedding model are a far more reliable signal
-    of whether relevant context was actually found.
+    WHY NOT RRF? RRF (Reciprocal Rank Fusion) scores are rank-based, not
+    magnitude-based. With a 5-chunk corpus and RRF_K=10, every rank-1 chunk
+    gets 1/(10+1) = 0.0909 from embeddings alone, and the full fused score
+    is bounded to roughly 0.13-0.18 regardless of actual semantic relevance.
+    This compresses all queries into an indistinguishable 0.002-wide band.
 
-    Formula: weighted average of top-chunk similarities, with the top chunk
-    contributing more weight than the rest. Capped at 1.0.
+    WHY embed_score (cosine similarity)? Cosine similarity directly measures
+    how semantically close the query is to the retrieved chunk. A score of
+    0.85 is genuinely more confident than 0.55. This produces a meaningful,
+    well-spread range across queries of varying difficulty.
+
+    Formula: weighted average of cosine similarities across the passed chunks,
+    with the top chunk contributing 50% of the weight. Falls back gracefully
+    to the fused score if embed_score is not present (e.g. older cache).
+    Capped at 1.0.
     """
     if not chunks:
         return 0.0
 
-    scores = [c.get("similarity_score", 0.0) for c in chunks]
+    # Prefer embed_score (raw cosine similarity); fall back to fused RRF score
+    # only if the key is absent (backward-compat with any cached chunk dicts).
+    scores = [
+        c.get("embed_score", c.get("similarity_score", 0.0))
+        for c in chunks
+    ]
 
     if len(scores) == 1:
         return round(min(scores[0], 1.0), 4)

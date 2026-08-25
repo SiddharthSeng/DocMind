@@ -1,0 +1,26 @@
+[
+  {
+    "timestamp": "2026-08-25T12:37:53.133329+00:00",
+    "test_set_size": 11,
+    "precision_at_1": 0.875,
+    "precision_at_3": 1.0,
+    "precision_at_5": 1.0,
+    "mrr": 0.9375,
+    "correct_abstention_rate": 100.0,
+    "mean_faithfulness": 4.125,
+    "faithfulness_n_scored": 8,
+    "faithfulness_skipped": false
+  },
+  {
+    "timestamp": "2026-08-25T12:42:23.782102+00:00",
+    "test_set_size": 11,
+    "precision_at_1": 0.875,
+    "precision_at_3": 1.0,
+    "precision_at_5": 1.0,
+    "mrr": 0.9375,
+    "correct_abstention_rate": 100.0,
+    "mean_faithfulness": null,
+    "faithfulness_n_scored": 0,
+    "faithfulness_skipped": true
+  }
+]
