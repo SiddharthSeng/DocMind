@@ -9,7 +9,7 @@ Hallucination-resistance strategy
 This module does NOT merely instruct the LLM to "be honest" — a prompt-level
 plea that a model can silently violate.  Instead it uses four structural checks:
 
-  1. Similarity gate  – chunks below a cosine-similarity threshold are dropped
+  1. Similarity gate  – chunks below a fused RRF score threshold are dropped
      before the prompt is built, so low-quality retrievals never reach the LLM.
   2. Context-only system role  – the system prompt frames the model as a "lookup
      tool", not a conversational agent, which shifts its prior toward extraction.
@@ -38,7 +38,6 @@ Usage
 
 import json
 import re
-import statistics
 from typing import Any
 
 import requests  # pip install requests  (already lightweight, no extra SDK needed)

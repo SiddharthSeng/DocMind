@@ -1,6 +1,5 @@
 pdfplumber==0.11.0
 tiktoken>=0.6.0
-sentence-transformers==3.0.1
 chromadb==0.5.5
 requests>=2.31.0
 rank_bm25>=0.2.2
