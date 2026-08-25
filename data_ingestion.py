@@ -103,7 +103,7 @@ def process_documents(input_dir: str, output_file: str, chunk_size: int = 500, o
         # Store metadata and chunk info
         for index, chunk in enumerate(text_chunks):
             chunk_data = {
-                "chunk_id": str(uuid.uuid4()),  # Unique ID for each chunk
+                "chunk_id": f"{file_name}_chunk_{index}",  # Unique deterministic ID for each chunk
                 "source_file": file_name,       # Keep track of where it came from
                 "text": chunk,                  # The actual raw text of the chunk
                 "chunk_index": index            # Its position in the source document

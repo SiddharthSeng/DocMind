@@ -3,42 +3,42 @@
         "id": "exact_sla_1",
         "query": "What is the uptime commitment for Enterprise and Pro tier customers?",
         "expected_source": "docmind_sla.txt",
-        "expected_chunk_id": "39f39831-ae2c-4c4e-a7fe-3ddb23dd63cc",
+        "expected_chunk_id": "docmind_sla.txt_chunk_0",
         "type": "exact-fact"
     },
     {
         "id": "paraphrase_sla_1",
         "query": "When does scheduled maintenance usually happen?",
         "expected_source": "docmind_sla.txt",
-        "expected_chunk_id": "39f39831-ae2c-4c4e-a7fe-3ddb23dd63cc",
+        "expected_chunk_id": "docmind_sla.txt_chunk_0",
         "type": "paraphrased"
     },
     {
         "id": "paraphrase_sla_2",
         "query": "Can I get my service credit refunded to my bank account as cash?",
         "expected_source": "docmind_sla.txt",
-        "expected_chunk_id": "06c14b82-13b3-4577-bb74-ef0968ea7b96",
+        "expected_chunk_id": "docmind_sla.txt_chunk_1",
         "type": "paraphrased"
     },
     {
         "id": "exact_privacy_1",
         "query": "What third-party subprocessors does DocMind use?",
         "expected_source": "docmind_privacy.txt",
-        "expected_chunk_id": "030c227b-6188-4622-88e4-28cc3a749f5c",
+        "expected_chunk_id": "docmind_privacy.txt_chunk_1",
         "type": "exact-fact"
     },
     {
         "id": "paraphrase_privacy_1",
         "query": "If I delete a document from my dashboard, how long until the vector embeddings are completely erased?",
         "expected_source": "docmind_privacy.txt",
-        "expected_chunk_id": "030c227b-6188-4622-88e4-28cc3a749f5c",
+        "expected_chunk_id": "docmind_privacy.txt_chunk_1",
         "type": "paraphrased"
     },
     {
         "id": "paraphrase_privacy_2",
         "query": "Are my uploaded PDFs stored in the same database space as other customers?",
         "expected_source": "docmind_privacy.txt",
-        "expected_chunk_id": "fbca4cce-48b1-45df-b9ed-97678f5f0682",
+        "expected_chunk_id": "docmind_privacy.txt_chunk_0",
         "type": "paraphrased"
     },
     {
@@ -66,14 +66,14 @@
         "id": "existing_test_1",
         "query": "What happens if uptime drops below 95%?",
         "expected_source": "docmind_sla.txt",
-        "expected_chunk_id": "06c14b82-13b3-4577-bb74-ef0968ea7b96",
+        "expected_chunk_id": "docmind_sla.txt_chunk_1",
         "type": "paraphrased"
     },
     {
         "id": "existing_test_2",
         "query": "Do you use customer documents to train the LLM?",
         "expected_source": "docmind_privacy.txt",
-        "expected_chunk_id": "fbca4cce-48b1-45df-b9ed-97678f5f0682",
+        "expected_chunk_id": "docmind_privacy.txt_chunk_0",
         "type": "paraphrased"
     }
 ]
