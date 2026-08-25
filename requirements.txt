@@ -6,3 +6,4 @@ rank_bm25>=0.2.2
 fastapi>=0.110.0
 uvicorn>=0.29.0
 python-multipart>=0.0.9
+streamlit>=1.30.0
