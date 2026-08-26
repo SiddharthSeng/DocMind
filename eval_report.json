@@ -1,10 +1,11 @@
 {
-  "run_timestamp": "2026-08-25T12:42:23.782102+00:00",
+  "run_timestamp": "2026-08-26T02:25:47.573792+00:00",
   "test_set_size": 11,
   "pipeline_notes": {
-    "retriever": "Hybrid RRF (nomic-embed-text + BM25Okapi, K=10)",
-    "llm": "Ollama (llama3.1 local)",
+    "retriever": "Hybrid RRF (BAAI/bge-small-en-v1.5 + BM25Okapi, K=10)",
+    "llm": "N/A (retrieval-only run)",
     "top_k": 5,
+    "retrieval_only": true,
     "small_sample_caveat": "All metrics are computed on 11 test cases. This is an appropriate demo/portfolio size but is NOT statistically robust -- a single query change moves each metric by ~9 percentage points. Treat these numbers as directional indicators, not production benchmarks."
   },
   "retrieval_metrics": {
@@ -12,7 +13,7 @@
       "precision_at_1": 0.875,
       "precision_at_3": 1.0,
       "precision_at_5": 1.0,
-      "mrr": 0.9375,
+      "mrr": 0.9167,
       "count": 8
     },
     "by_type": {
@@ -27,7 +28,7 @@
         "precision_at_1": 0.8333,
         "precision_at_3": 1.0,
         "precision_at_5": 1.0,
-        "mrr": 0.9167,
+        "mrr": 0.8889,
         "count": 6
       }
     }
@@ -35,9 +36,9 @@
   "generation_metrics": {
     "abstention": {
       "n_unrelated_queries": 3,
-      "n_correct_abstentions": 3,
-      "correct_abstention_rate_pct": 100.0,
-      "n_false_abstentions": 0,
+      "n_correct_abstentions": null,
+      "correct_abstention_rate_pct": null,
+      "n_false_abstentions": null,
       "note": "A 'correct abstention' is when the model responds with the canonical refusal phrase for a query that has no grounding document."
     },
     "faithfulness": {
@@ -55,110 +56,110 @@
       "id": "exact_sla_1",
       "type": "exact-fact",
       "query": "What is the uptime commitment for Enterprise and Pro tier customers?",
-      "answer": "The uptime commitment for Enterprise and Pro tier customers is 99.9%.",
-      "is_abstention": false,
-      "confidence": 0.6152,
-      "warning": "1 chunk(s) were dropped (similarity < 0.1).",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
       "faithfulness_score": null
     },
     {
       "id": "paraphrase_sla_1",
       "type": "paraphrased",
       "query": "When does scheduled maintenance usually happen?",
-      "answer": "Scheduled maintenance usually occurs during low-traffic windows, typically on Saturday from 2:00 AM to 4:00 AM UTC.",
-      "is_abstention": false,
-      "confidence": 0.5252,
-      "warning": "3 chunk(s) were dropped (similarity < 0.1).",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
       "faithfulness_score": null
     },
     {
       "id": "paraphrase_sla_2",
       "type": "paraphrased",
       "query": "Can I get my service credit refunded to my bank account as cash?",
-      "answer": "No, credits cannot be exchanged for cash. According to the passages, \"Credits cannot be exchanged for cash and will be applied to future invoices.\"",
-      "is_abstention": false,
-      "confidence": 0.5469,
-      "warning": "1 chunk(s) were dropped (similarity < 0.1).",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
       "faithfulness_score": null
     },
     {
       "id": "exact_privacy_1",
       "type": "exact-fact",
       "query": "What third-party subprocessors does DocMind use?",
-      "answer": "DocMind uses the following third-party subprocessors: \n- AWS (Hosting & Storage)\n- Stripe (Payment Processing)\n- Together AI (Optional Fallback LLM API)",
-      "is_abstention": false,
-      "confidence": 0.5999,
-      "warning": "2 chunk(s) were dropped (similarity < 0.1).",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
       "faithfulness_score": null
     },
     {
       "id": "paraphrase_privacy_1",
       "type": "paraphrased",
       "query": "If I delete a document from my dashboard, how long until the vector embeddings are completely erased?",
-      "answer": "According to the passages, if you delete a document from your dashboard, the raw file and its corresponding vector embeddings are hard-deleted within 72 hours.",
-      "is_abstention": false,
-      "confidence": 0.5973,
-      "warning": "1 chunk(s) were dropped (similarity < 0.1).",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
       "faithfulness_score": null
     },
     {
       "id": "paraphrase_privacy_2",
       "type": "paraphrased",
       "query": "Are my uploaded PDFs stored in the same database space as other customers?",
-      "answer": "According to the passages, your uploaded documents and vector embeddings are stored in isolated ChromaDB namespaces, which suggests that they are stored separately from other customers' data.",
-      "is_abstention": false,
-      "confidence": 0.5174,
-      "warning": "1 chunk(s) were dropped (similarity < 0.1).",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
       "faithfulness_score": null
     },
     {
       "id": "unrelated_1",
       "type": "unrelated",
       "query": "How do I reset my password for the DocMind dashboard?",
-      "answer": "I don't have enough information in the provided documents to answer this question.",
-      "is_abstention": true,
-      "confidence": 0.0,
-      "warning": "1 chunk(s) were dropped (similarity < 0.1).; Model did not include a 'Sources:' section. It may have answered from training knowledge rather than the provided chunks.",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
       "faithfulness_score": null
     },
     {
       "id": "unrelated_2",
       "type": "unrelated",
       "query": "What are the exact monthly prices for the Enterprise and Pro tiers?",
-      "answer": "I don't have enough information in the provided documents to answer this question.",
-      "is_abstention": true,
-      "confidence": 0.0,
-      "warning": "1 chunk(s) were dropped (similarity < 0.1).",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
       "faithfulness_score": null
     },
     {
       "id": "unrelated_3",
       "type": "unrelated",
       "query": "Does the DocMind API support streaming responses via Server-Sent Events?",
-      "answer": "I don't have enough information in the provided documents to answer this question.",
-      "is_abstention": true,
-      "confidence": 0.0,
-      "warning": "Model did not include a 'Sources:' section. It may have answered from training knowledge rather than the provided chunks.",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
       "faithfulness_score": null
     },
     {
       "id": "existing_test_1",
       "type": "paraphrased",
       "query": "What happens if uptime drops below 95%?",
-      "answer": "If uptime drops below 95%, eligible customers may request a 50% credit of the monthly fee.",
-      "is_abstention": false,
-      "confidence": 0.5493,
-      "warning": "2 chunk(s) were dropped (similarity < 0.1).",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
       "faithfulness_score": null
     },
     {
       "id": "existing_test_2",
       "type": "paraphrased",
       "query": "Do you use customer documents to train the LLM?",
-      "answer": "No, DocMind does not use customer documents or user-submitted queries to train our foundational models (like DocMind-Mini or DocMind-Pro). Your data remains yours.",
-      "is_abstention": false,
-      "confidence": 0.5607,
-      "warning": "1 chunk(s) were dropped (similarity < 0.1).",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
       "faithfulness_score": null
     }
   ],
@@ -168,13 +169,13 @@
       "type": "exact-fact",
       "query": "What is the uptime commitment for Enterprise and Pro tier customers?",
       "rank": 1,
-      "expected_chunk_id": "39f39831-ae2c-4c4e-a7fe-3ddb23dd63cc",
+      "expected_chunk_id": "docmind_sla.txt_chunk_0",
       "retrieved_ids": [
-        "39f39831-ae2c-4c4e-a7fe-3ddb23dd63cc",
-        "06c14b82-13b3-4577-bb74-ef0968ea7b96",
-        "030c227b-6188-4622-88e4-28cc3a749f5c",
-        "fbca4cce-48b1-45df-b9ed-97678f5f0682",
-        "5c697f1e-ee0b-423d-89c5-097c2b8a4bb3"
+        "docmind_sla.txt_chunk_0",
+        "docmind_sla.txt_chunk_1",
+        "docmind_privacy.txt_chunk_1",
+        "Design Project - Sem 6.pdf_chunk_5",
+        "Design Project - Sem 6.pdf_chunk_16"
       ]
     },
     {
@@ -182,13 +183,13 @@
       "type": "paraphrased",
       "query": "When does scheduled maintenance usually happen?",
       "rank": 1,
-      "expected_chunk_id": "39f39831-ae2c-4c4e-a7fe-3ddb23dd63cc",
+      "expected_chunk_id": "docmind_sla.txt_chunk_0",
       "retrieved_ids": [
-        "39f39831-ae2c-4c4e-a7fe-3ddb23dd63cc",
-        "fbca4cce-48b1-45df-b9ed-97678f5f0682",
-        "06c14b82-13b3-4577-bb74-ef0968ea7b96",
-        "030c227b-6188-4622-88e4-28cc3a749f5c",
-        "5c697f1e-ee0b-423d-89c5-097c2b8a4bb3"
+        "docmind_sla.txt_chunk_0",
+        "docmind_privacy.txt_chunk_0",
+        "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_38",
+        "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_40",
+        "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_13"
       ]
     },
     {
@@ -196,13 +197,13 @@
       "type": "paraphrased",
       "query": "Can I get my service credit refunded to my bank account as cash?",
       "rank": 1,
-      "expected_chunk_id": "06c14b82-13b3-4577-bb74-ef0968ea7b96",
+      "expected_chunk_id": "docmind_sla.txt_chunk_1",
       "retrieved_ids": [
-        "06c14b82-13b3-4577-bb74-ef0968ea7b96",
-        "39f39831-ae2c-4c4e-a7fe-3ddb23dd63cc",
-        "030c227b-6188-4622-88e4-28cc3a749f5c",
-        "fbca4cce-48b1-45df-b9ed-97678f5f0682",
-        "5c697f1e-ee0b-423d-89c5-097c2b8a4bb3"
+        "docmind_sla.txt_chunk_1",
+        "docmind_privacy.txt_chunk_1",
+        "docmind_sla.txt_chunk_0",
+        "Design Project - Sem 6.pdf_chunk_1",
+        "docmind_privacy.txt_chunk_0"
       ]
     },
     {
@@ -210,13 +211,13 @@
       "type": "exact-fact",
       "query": "What third-party subprocessors does DocMind use?",
       "rank": 1,
-      "expected_chunk_id": "030c227b-6188-4622-88e4-28cc3a749f5c",
+      "expected_chunk_id": "docmind_privacy.txt_chunk_1",
       "retrieved_ids": [
-        "030c227b-6188-4622-88e4-28cc3a749f5c",
-        "fbca4cce-48b1-45df-b9ed-97678f5f0682",
-        "39f39831-ae2c-4c4e-a7fe-3ddb23dd63cc",
-        "5c697f1e-ee0b-423d-89c5-097c2b8a4bb3",
-        "06c14b82-13b3-4577-bb74-ef0968ea7b96"
+        "docmind_privacy.txt_chunk_1",
+        "docmind_privacy.txt_chunk_0",
+        "docmind_sla.txt_chunk_0",
+        "Design Project - Sem 6.pdf_chunk_11",
+        "Design Project - Sem 6.pdf_chunk_25"
       ]
     },
     {
@@ -224,13 +225,13 @@
       "type": "paraphrased",
       "query": "If I delete a document from my dashboard, how long until the vector embeddings are completely erased?",
       "rank": 1,
-      "expected_chunk_id": "030c227b-6188-4622-88e4-28cc3a749f5c",
+      "expected_chunk_id": "docmind_privacy.txt_chunk_1",
       "retrieved_ids": [
-        "030c227b-6188-4622-88e4-28cc3a749f5c",
-        "fbca4cce-48b1-45df-b9ed-97678f5f0682",
-        "39f39831-ae2c-4c4e-a7fe-3ddb23dd63cc",
-        "06c14b82-13b3-4577-bb74-ef0968ea7b96",
-        "5c697f1e-ee0b-423d-89c5-097c2b8a4bb3"
+        "docmind_privacy.txt_chunk_1",
+        "docmind_privacy.txt_chunk_0",
+        "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_20",
+        "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_64",
+        "Design Project - Sem 6.pdf_chunk_9"
       ]
     },
     {
@@ -238,27 +239,27 @@
       "type": "paraphrased",
       "query": "Are my uploaded PDFs stored in the same database space as other customers?",
       "rank": 1,
-      "expected_chunk_id": "fbca4cce-48b1-45df-b9ed-97678f5f0682",
+      "expected_chunk_id": "docmind_privacy.txt_chunk_0",
       "retrieved_ids": [
-        "fbca4cce-48b1-45df-b9ed-97678f5f0682",
-        "030c227b-6188-4622-88e4-28cc3a749f5c",
-        "06c14b82-13b3-4577-bb74-ef0968ea7b96",
-        "39f39831-ae2c-4c4e-a7fe-3ddb23dd63cc",
-        "5c697f1e-ee0b-423d-89c5-097c2b8a4bb3"
+        "docmind_privacy.txt_chunk_0",
+        "docmind_sla.txt_chunk_1",
+        "docmind_privacy.txt_chunk_1",
+        "docmind_sla.txt_chunk_0",
+        "Design Project - Sem 6.pdf_chunk_17"
       ]
     },
     {
       "id": "existing_test_1",
       "type": "paraphrased",
       "query": "What happens if uptime drops below 95%?",
-      "rank": 2,
-      "expected_chunk_id": "06c14b82-13b3-4577-bb74-ef0968ea7b96",
+      "rank": 3,
+      "expected_chunk_id": "docmind_sla.txt_chunk_1",
       "retrieved_ids": [
-        "39f39831-ae2c-4c4e-a7fe-3ddb23dd63cc",
-        "06c14b82-13b3-4577-bb74-ef0968ea7b96",
-        "030c227b-6188-4622-88e4-28cc3a749f5c",
-        "5c697f1e-ee0b-423d-89c5-097c2b8a4bb3",
-        "fbca4cce-48b1-45df-b9ed-97678f5f0682"
+        "docmind_sla.txt_chunk_0",
+        "docmind_privacy.txt_chunk_1",
+        "docmind_sla.txt_chunk_1",
+        "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_41",
+        "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_29"
       ]
     },
     {
@@ -266,13 +267,13 @@
       "type": "paraphrased",
       "query": "Do you use customer documents to train the LLM?",
       "rank": 1,
-      "expected_chunk_id": "fbca4cce-48b1-45df-b9ed-97678f5f0682",
+      "expected_chunk_id": "docmind_privacy.txt_chunk_0",
       "retrieved_ids": [
-        "fbca4cce-48b1-45df-b9ed-97678f5f0682",
-        "030c227b-6188-4622-88e4-28cc3a749f5c",
-        "39f39831-ae2c-4c4e-a7fe-3ddb23dd63cc",
-        "06c14b82-13b3-4577-bb74-ef0968ea7b96",
-        "5c697f1e-ee0b-423d-89c5-097c2b8a4bb3"
+        "docmind_privacy.txt_chunk_0",
+        "docmind_privacy.txt_chunk_1",
+        "Design Project - Sem 6.pdf_chunk_15",
+        "Design Project - Sem 6.pdf_chunk_21",
+        "Design Project - Sem 6.pdf_chunk_22"
       ]
     }
   ]

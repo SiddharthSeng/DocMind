@@ -1,0 +1,63 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# System deps: build-essential for hnswlib (ChromaDB); libgomp1 for torch CPU.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── Python dependencies ──────────────────────────────────────────────────────
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# ── Pre-download embedding model ─────────────────────────────────────────────
+# Bakes BAAI/bge-small-en-v1.5 (~90 MB) into the image at build time so the
+# first request doesn't block on a model download.  sentence-transformers
+# caches to ~/.cache/huggingface/hub by default.
+RUN python -c "\
+from sentence_transformers import SentenceTransformer; \
+SentenceTransformer('BAAI/bge-small-en-v1.5'); \
+print('bge-small-en-v1.5 cached successfully')"
+
+# ── Application code & Corpus ────────────────────────────────────────────────
+COPY . .
+
+# Bake the fixed corpus into the image (creates chroma_db/ in the image layer)
+# We set EMBEDDING_BACKEND so vector_store.py knows to use the local bge-small model.
+RUN EMBEDDING_BACKEND=hf_bge_small python -c "\
+from vector_store import VectorStore; \
+print('Baking corpus into image...'); \
+store = VectorStore(); \
+store.load_and_embed_chunks('processed_chunks.json'); \
+print(f'Successfully baked {store.collection.count()} chunks into chroma_db/')"
+
+# Create per-session storage directories
+RUN mkdir -p sessions && chmod -R 777 sessions
+
+# ── Environment variables (deployed defaults) ─────────────────────────────────
+# Embedding: bge-small-en-v1.5 via sentence-transformers (no external API call)
+ENV EMBEDDING_BACKEND=hf_bge_small
+
+# LLM: Groq Cloud API (free tier, no credit card required)
+# Set GROQ_API_KEY in Render dashboard — do NOT bake it into this file.
+ENV LLM_BACKEND=groq
+ENV GROQ_MODEL=llama-3.1-8b-instant
+
+# Retrieval thresholds (calibrated for hf_bge_small on this corpus)
+ENV MIN_SIMILARITY_THRESHOLD=0.10
+ENV ABSTAIN_THRESHOLD=0.07
+
+# Suppress HF symlink warning (not supported on all container filesystems)
+ENV HF_HUB_DISABLE_SYMLINKS_WARNING=1
+
+# ── RAM note ──────────────────────────────────────────────────────────────────
+# Runtime estimate:  PyTorch CPU + bge-small: ~300 MB
+#                   FastAPI + ChromaDB + Python: ~150 MB
+#                   Total: ~450 MB  (Render free tier limit: 512 MB)
+# If OOM errors occur, consider switching to fastembed (ONNX, same model, ~150 MB total):
+#   pip install fastembed  and update vector_store.py to use EMBEDDING_BACKEND=bge_fastembed
+
+EXPOSE 8000
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]

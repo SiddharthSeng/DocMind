@@ -22,5 +22,41 @@
     "mean_faithfulness": null,
     "faithfulness_n_scored": 0,
     "faithfulness_skipped": true
+  },
+  {
+    "timestamp": "2026-08-25T13:12:53.875930+00:00",
+    "test_set_size": 11,
+    "precision_at_1": 0.0,
+    "precision_at_3": 0.0,
+    "precision_at_5": 0.0,
+    "mrr": 0.0,
+    "correct_abstention_rate": 100.0,
+    "mean_faithfulness": null,
+    "faithfulness_n_scored": 0,
+    "faithfulness_skipped": true
+  },
+  {
+    "timestamp": "2026-08-25T13:15:22.169344+00:00",
+    "test_set_size": 11,
+    "precision_at_1": 0.75,
+    "precision_at_3": 1.0,
+    "precision_at_5": 1.0,
+    "mrr": 0.875,
+    "correct_abstention_rate": 100.0,
+    "mean_faithfulness": null,
+    "faithfulness_n_scored": 0,
+    "faithfulness_skipped": true
+  },
+  {
+    "timestamp": "2026-08-26T02:25:47.573792+00:00",
+    "test_set_size": 11,
+    "precision_at_1": 0.875,
+    "precision_at_3": 1.0,
+    "precision_at_5": 1.0,
+    "mrr": 0.9167,
+    "correct_abstention_rate": null,
+    "mean_faithfulness": null,
+    "faithfulness_n_scored": 0,
+    "faithfulness_skipped": true
   }
 ]

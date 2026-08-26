@@ -1,18 +1,194 @@
 import json
+import os
 import re
 import chromadb
 import httpx
+import requests as _requests
+from chromadb import EmbeddingFunction, Documents, Embeddings
 from chromadb.utils import embedding_functions
 from rank_bm25 import BM25Okapi
 
-# A retrieval-optimized embedding model running locally via Ollama.
-# nomic-embed-text is specifically trained for RAG and handles semantic paraphrasing well.
-embedding_function = embedding_functions.OllamaEmbeddingFunction(
-    url="http://localhost:11434/api/embeddings",
-    model_name="nomic-embed-text",
-)
-# Ollama local inference can sometimes exceed the default 5-second httpx timeout, so we increase it.
-embedding_function._session = httpx.Client(timeout=120)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+# ---------------------------------------------------------------------------
+# Embedding Backend Selection
+# ---------------------------------------------------------------------------
+# Three backends are supported, chosen via the EMBEDDING_BACKEND env var:
+#
+#   'ollama'       (default) — calls local Ollama at OLLAMA_HOST.
+#                  Used for local development. Requires Ollama running locally.
+#
+#   'nomic_api'    (recommended for deployment) — calls the Nomic Atlas API.
+#                  Uses the SAME nomic-embed-text model family as the local
+#                  Ollama backend. Score distributions and calibrated thresholds
+#                  remain valid — no recalibration needed after deploying.
+#                  Requires: NOMIC_API_KEY env var.
+#                  Free tier: https://atlas.nomic.ai (sign up for a free key).
+#
+#   'hf_bge_small' (explicit opt-in fallback) — calls HF Inference API with
+#                  BAAI/bge-small-en-v1.5 (the only free-tier HF embedding model
+#                  confirmed working). WARNING: this is a DIFFERENT model with
+#                  different score geometry. You MUST re-run run_calibration.py
+#                  and evaluate.py against this backend before deploying.
+#                  Requires: HF_API_TOKEN env var.
+#
+# NOTE: nomic-ai/nomic-embed-text-v1 is NOT available on the HF Serverless
+# Inference API. It requires trust_remote_code=True, which HF blocks on shared
+# infrastructure for security reasons. Use 'nomic_api' instead.
+# ---------------------------------------------------------------------------
+
+EMBEDDING_BACKEND = os.getenv("EMBEDDING_BACKEND", "ollama").lower()
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+NOMIC_API_KEY = os.getenv("NOMIC_API_KEY", "")
+HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
+
+
+class _NomicAPIEmbeddingFunction(EmbeddingFunction):
+    """
+    ChromaDB-compatible embedding function that calls the Nomic Atlas API.
+
+    Uses the same nomic-embed-text model family as the Ollama backend, so
+    cosine similarity scores and all calibrated thresholds stay valid when
+    switching from local Ollama to the Nomic API for deployment.
+
+    The API uses task-specific prefixes (as required by Nomic's model):
+      - Documents indexed with prefix "search_document: "
+      - Queries embedded with prefix "search_query: "
+    ChromaDB calls this function the same way for both, so we default to the
+    document prefix and rely on the model's robustness for query calls. For
+    production, consider splitting into separate encode_documents / encode_queries
+    if you observe prefix-related quality degradation.
+    """
+
+    def __init__(self, api_key: str, model: str = "nomic-embed-text-v1.5"):
+        self._api_key = api_key
+        self._model = model
+        self._url = "https://api-atlas.nomic.ai/v1/embedding/text"
+
+    def __call__(self, input: Documents) -> Embeddings:
+        """
+        Embeds a batch of text strings via the Nomic Atlas API.
+        Returns a list of float vectors (one per input string).
+        """
+        headers = {
+            "Authorization": f"Bearer {self._api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": self._model,
+            # task_type='search_document' is appropriate for both indexing and
+            # querying in a RAG context — it produces retrieval-optimised vectors.
+            "task_type": "search_document",
+            "texts": list(input),
+        }
+        resp = _requests.post(self._url, json=payload, headers=headers, timeout=60)
+        if resp.status_code != 200:
+            raise RuntimeError(
+                f"Nomic API returned HTTP {resp.status_code}: {resp.text[:300]}"
+            )
+        data = resp.json()
+        return data["embeddings"]
+
+
+class _BGESmallLocalEmbeddingFunction(EmbeddingFunction):
+    """
+    ChromaDB-compatible embedding function that loads BAAI/bge-small-en-v1.5
+    in-process via sentence-transformers (no external API call required).
+
+    The model (~90 MB on disk, 384-dimensional embeddings) is loaded once at
+    class instantiation and reused for all subsequent calls.  Vectors are
+    L2-normalised (normalize_embeddings=True) to match ChromaDB's cosine
+    distance space — same normalisation convention as nomic-embed-text.
+
+    WHY DIFFERENT THRESHOLDS ARE NEEDED:
+    This is a different model family from nomic-embed-text. Both produce
+    normalised vectors for cosine similarity, and both are retrieval-optimised,
+    but the absolute cosine similarity values (embed_score) will differ because
+    the models have different architectures and training distributions. The
+    RRF fused scores are rank-based (so less sensitive to absolute values), but
+    the embed_score used by _compute_confidence() will shift. Run
+    run_calibration.py after switching to establish real thresholds.
+
+    DEPLOYMENT RAM NOTE:
+    sentence-transformers pulls in PyTorch CPU (~300 MB runtime). Combined with
+    FastAPI, ChromaDB, and Python overhead (~150 MB), the backend container
+    needs ~450-500 MB RAM. This is tight on Render's 512 MB free tier.
+    If OOM errors occur in production, replace with the fastembed backend
+    (same model, ONNX runtime, ~150 MB total) by setting
+    EMBEDDING_BACKEND=bge_fastembed.
+    """
+
+    MODEL_NAME = "BAAI/bge-small-en-v1.5"
+
+    def __init__(self):
+        # Lazy import so the heavy torch dependency is only loaded when this
+        # backend is actually selected.
+        try:
+            from sentence_transformers import SentenceTransformer
+        except ImportError as exc:
+            raise ImportError(
+                "sentence-transformers is required for EMBEDDING_BACKEND=hf_bge_small. "
+                "Install it with: pip install sentence-transformers"
+            ) from exc
+        print(f"[VectorStore] Loading {self.MODEL_NAME} via sentence-transformers...")
+        self._model = SentenceTransformer(self.MODEL_NAME)
+        print(f"[VectorStore] {self.MODEL_NAME} loaded (dim=384).")
+
+    def __call__(self, input: Documents) -> Embeddings:
+        """
+        Encode a batch of strings and return L2-normalised float vectors.
+        ChromaDB passes document texts and query texts through the same
+        function, so normalisation must be consistent.
+        """
+        embeddings = self._model.encode(
+            list(input),
+            normalize_embeddings=True,   # L2-normalise → cosine sim = dot product
+            show_progress_bar=False,
+        )
+        # SentenceTransformer returns a numpy ndarray; ChromaDB expects list[list[float]]
+        return embeddings.tolist()
+
+
+# --- Build the active embedding function based on EMBEDDING_BACKEND ---
+if EMBEDDING_BACKEND == "nomic_api":
+    if not NOMIC_API_KEY:
+        raise EnvironmentError(
+            "EMBEDDING_BACKEND=nomic_api requires NOMIC_API_KEY to be set. "
+            "Sign up for a free key at https://atlas.nomic.ai"
+        )
+    embedding_function = _NomicAPIEmbeddingFunction(api_key=NOMIC_API_KEY)
+    print(f"[VectorStore] Embedding backend: Nomic Atlas API (nomic-embed-text-v1.5)")
+
+elif EMBEDDING_BACKEND == "hf_bge_small":
+    # Loads BAAI/bge-small-en-v1.5 in-process via sentence-transformers.
+    # No external API token needed — model is downloaded from HF Hub on first
+    # run and cached in ~/.cache/huggingface/hub/.
+    embedding_function = _BGESmallLocalEmbeddingFunction()
+    print(
+        "[VectorStore] WARNING: Embedding backend is hf_bge_small (BAAI/bge-small-en-v1.5 "
+        "via sentence-transformers). This model has different score geometry than "
+        "nomic-embed-text. Calibrated thresholds are NOT valid for this backend — "
+        "re-run run_calibration.py and evaluate.py before deploying."
+    )
+
+else:
+    # Default: local Ollama
+    if EMBEDDING_BACKEND != "ollama":
+        print(
+            f"[VectorStore] WARNING: Unknown EMBEDDING_BACKEND '{EMBEDDING_BACKEND}', "
+            "falling back to 'ollama'."
+        )
+    embedding_function = embedding_functions.OllamaEmbeddingFunction(
+        url=f"{OLLAMA_HOST}/api/embeddings",
+        model_name="nomic-embed-text",
+    )
+    # Ollama local inference can exceed the default 5-second httpx timeout.
+    embedding_function._session = httpx.Client(timeout=120)
+    print(f"[VectorStore] Embedding backend: Ollama at {OLLAMA_HOST} (nomic-embed-text)")
 
 # ---------------------------------------------------------------------------
 # RRF constant — the key tuning parameter for Reciprocal Rank Fusion.

@@ -248,15 +248,24 @@ def _get_chunk_text_by_id(chunk_id: str, store: VectorStore) -> str | None:
 # Main evaluation loop
 # ---------------------------------------------------------------------------
 
-def run_evaluation(skip_faithfulness: bool = False) -> dict[str, Any]:
+def run_evaluation(
+    skip_faithfulness: bool = False,
+    retrieval_only:    bool = False,
+) -> dict[str, Any]:
     """
     Runs the full evaluation harness and returns a results dict.
 
     Args:
-        skip_faithfulness: If True, skip the LLM faithfulness scoring step
-                           (useful for quick re-runs where generation quality
-                           is not the focus, or when Ollama is unavailable).
+        skip_faithfulness: If True, skip the LLM faithfulness scoring step.
+                           Useful for faster re-runs focused on retrieval metrics,
+                           or when the LLM is unavailable.
+        retrieval_only:    If True, skip ALL generation steps (no Ollama required).
+                           Only Precision@k, MRR, and per-query retrieval rank are
+                           reported. Abstention and faithfulness are reported as N/A.
+                           Implies skip_faithfulness=True.
     """
+    if retrieval_only:
+        skip_faithfulness = True
     cases = load_test_cases(TEST_CASES_PATH)
 
     print("\nInitialising VectorStore...")
@@ -301,14 +310,30 @@ def run_evaluation(skip_faithfulness: bool = False) -> dict[str, Any]:
             rank_str = str(rank) if rank is not None else "NOT FOUND"
             print(f"       Retrieval rank of expected chunk: {rank_str}")
 
-        # ---- Generation ----------------------------------------------
+        # ---- Generation (skipped when --retrieval-only) -----------------
+        if retrieval_only:
+            # No LLM call: record a placeholder so aggregate loops don't break.
+            gen_entry: dict[str, Any] = {
+                "id":            q_id,
+                "type":          q_type,
+                "query":         query,
+                "answer":        None,
+                "is_abstention": None,
+                "confidence":    None,
+                "warning":       None,
+                "faithfulness_score": None,
+            }
+            generation_results.append(gen_entry)
+            print()
+            continue
+
         gen = generate_answer(chunks, query)
         answer = gen["answer"]
         is_abstention = ABSTAIN_PHRASE in answer.lower()
 
         print(f"       Answer preview: {answer[:100].strip()}{'...' if len(answer) > 100 else ''}")
 
-        gen_entry: dict[str, Any] = {
+        gen_entry = {
             "id":            q_id,
             "type":          q_type,
             "query":         query,
@@ -347,14 +372,21 @@ def run_evaluation(skip_faithfulness: bool = False) -> dict[str, Any]:
     # --- Abstention metrics ---
     unrelated_cases = [r for r in generation_results if r["type"] == "unrelated"]
     n_unrelated = len(unrelated_cases)
-    n_correct_abstentions = sum(1 for r in unrelated_cases if r["is_abstention"])
-    abstention_rate = (
-        round(n_correct_abstentions / n_unrelated, 4) if n_unrelated > 0 else None
-    )
+    if retrieval_only:
+        n_correct_abstentions = None
+        abstention_rate = None
+    else:
+        n_correct_abstentions = sum(1 for r in unrelated_cases if r["is_abstention"])
+        abstention_rate = (
+            round(n_correct_abstentions / n_unrelated, 4) if n_unrelated > 0 else None
+        )
 
     # Count false abstentions (model abstained when it should have answered)
     should_answer = [r for r in generation_results if r["type"] != "unrelated"]
-    n_false_abstentions = sum(1 for r in should_answer if r["is_abstention"])
+    n_false_abstentions = (
+        None if retrieval_only
+        else sum(1 for r in should_answer if r["is_abstention"])
+    )
 
     # --- Faithfulness metrics ---
     faith_scores = [
@@ -375,9 +407,10 @@ def run_evaluation(skip_faithfulness: bool = False) -> dict[str, Any]:
         "run_timestamp": timestamp,
         "test_set_size": total,
         "pipeline_notes": {
-            "retriever": "Hybrid RRF (nomic-embed-text + BM25Okapi, K=10)",
-            "llm":       "Ollama (llama3.1 local)",
+            "retriever": "Hybrid RRF (BAAI/bge-small-en-v1.5 + BM25Okapi, K=10)",
+            "llm":       "Ollama (llama3.1 local)" if not retrieval_only else "N/A (retrieval-only run)",
             "top_k":     RETRIEVE_TOP_K,
+            "retrieval_only": retrieval_only,
             "small_sample_caveat": (
                 f"All metrics are computed on {total} test cases. "
                 "This is an appropriate demo/portfolio size but is NOT statistically robust -- "
@@ -490,13 +523,16 @@ def print_summary(report: dict[str, Any]) -> None:
 
     abt_rate = abt.get("correct_abstention_rate_pct")
     abt_str  = f"{abt_rate:.0f}%" if abt_rate is not None else "N/A"
+    n_correct = abt["n_correct_abstentions"]
+    n_correct_str = str(n_correct) if n_correct is not None else "N/A"
     print(
         f"  Correct abstention rate:    {abt_str}  "
-        f"({abt['n_correct_abstentions']}/{abt['n_unrelated_queries']} unrelated queries)"
+        f"({n_correct_str}/{abt['n_unrelated_queries']} unrelated queries)"
     )
-    if abt["n_false_abstentions"] > 0:
+    n_false = abt["n_false_abstentions"]
+    if n_false is not None and n_false > 0:
         print(
-            f"  WARNING  False abstentions: {abt['n_false_abstentions']}  "
+            f"  WARNING  False abstentions: {n_false}  "
             "(model refused queries it should have answered)"
         )
 
@@ -596,15 +632,30 @@ def main() -> None:
             "Useful for faster re-runs focused on retrieval metrics only."
         ),
     )
+    parser.add_argument(
+        "--retrieval-only",
+        action="store_true",
+        default=False,
+        help=(
+            "Skip ALL generation steps — no Ollama required. "
+            "Reports Precision@k and MRR only. "
+            "Abstention and faithfulness metrics are reported as N/A."
+        ),
+    )
     args = parser.parse_args()
 
     print("\nDocMind RAG Pipeline -- Formal Evaluation Harness")
     print("=" * 68)
     if args.skip_faithfulness:
         print("[INFO] Faithfulness scoring disabled (--skip-faithfulness).\n")
+    if args.retrieval_only:
+        print("[INFO] Retrieval-only mode — generation and faithfulness skipped (no Ollama required).\n")
 
     # Run evaluation
-    report = run_evaluation(skip_faithfulness=args.skip_faithfulness)
+    report = run_evaluation(
+        skip_faithfulness=args.skip_faithfulness,
+        retrieval_only=args.retrieval_only,
+    )
 
     # Print clean summary
     print_summary(report)

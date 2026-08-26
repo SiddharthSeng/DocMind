@@ -1,0 +1,650 @@
+[
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_0",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": "HANDWRITTEN CODE EVALUATOR\nDESIGN PROJECT - IV\nSubmitted by\nSiddharth Senguttuvan - 22143049\nSyed Afreethi D - 22143019\nUnder the guidance of\nMs. A. Meenapriyadharsini\nAssistant Professor\nDr.Thangakumar J\nCSE Head of department\nDr. Angelina Geetha\nDean E&T\nin partial fulfilment for the award of the degree of\nBACHELOR OF TECHNOLOGY\nin\nCOMPUTER SCIENCE AND ENGINEERING\nHINDUSTAN INSTITUTE OF TECHNOLOGY AND SCIENCE\nCHENNAI - 603103\nAPR 2025",
+        "chunk_index": 0
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_1",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " ENGINEERING\nHINDUSTAN INSTITUTE OF TECHNOLOGY AND SCIENCE\nCHENNAI - 603103\nAPR 2025\n1\nBONAFIDE CERTIFICATE\nCertified that this project report HANDWRITTEN CODE EVALUATOR is the\nbonafide work of Siddharth Senguttuvan - 22143049 and Syed Afreethi D -\n22143019 who carried out the project work under my supervision during the\nacademic year 2024 - 2025.\nMs. A. Meenapriyadarshini\nAssistant Professor\nDepartment of CSE.\nINTERNAL EXAMINER EXTERNAL EXAMINER\nName:_________________ Name:_________________\n",
+        "chunk_index": 1
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_2",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": "ini\nAssistant Professor\nDepartment of CSE.\nINTERNAL EXAMINER EXTERNAL EXAMINER\nName:_________________ Name:_________________\nDesignation:____________ Designation:____________\nProject Viva - voce conducted on ________\n2\nACKNOWLEDGEMENT 4\nABSTRACT 5\nCHAPTER 1 - INTRODUCTION 6\n1.1 INTRODUCTION 6\n1.2 PROBLEM STATEMENT 7\n1.3 MOTIVATION OF THE WORK 7\n1.4 OBJECTIVES 8\nCHAPTER 2 - LITERATURE SURVEY 9\n2.1 LITERATURE SURVEY 9\n2.2 SUMMARY 10\nCHAPTER 3 - DESIGN AND METHODO",
+        "chunk_index": 2
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_3",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " 9\n2.1 LITERATURE SURVEY 9\n2.2 SUMMARY 10\nCHAPTER 3 - DESIGN AND METHODOLOGY 11\n3.1 MODEL DESCRIPTION 11\n3.2 DATASET DETAIL 13\n3.3 TOOLS 13\n3.4 ARCHITECTURE DIAGRAM 15\nCHAPTER 4 - RESULTS AND ANALYSIS 16\n4.1 EXPERIMENTAL SETUP AND ANALYSIS 16\n4.2 RESULTS 17\n4.3 SUMMARY 18\nCHAPTER 5 - CONCLUSION 19\n5.1 CONCLUSION 19\n5.2 FUTURE ENHANCEMENTS 19\nAPPENDIX A - FRONTEND CODE 21\n",
+        "chunk_index": 3
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_4",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": ".1 CONCLUSION 19\n5.2 FUTURE ENHANCEMENTS 19\nAPPENDIX A - FRONTEND CODE 21\nAPPENDIX B - BACKEND CODE 22\nAPPENDIX C - TEAM DETAILS 24\nReferences 25\n3\nACKNOWLEDGEMENT\nFirst and foremost, we would like to thank ALMIGHTY who has provided us the strength to\ndo justice to our work and contribute our best to it.\nWe wish to express our deep sense of gratitude from the bottom of our heart to our Guide Ms.\nA. Meenapriyadarshini, Assistant Professor, Computer Science and Engineering, for her\nmotivating discussions, overwhelming suggestions, ingenious encouragement, invaluable\nsup",
+        "chunk_index": 4
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_5",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": "riyadarshini, Assistant Professor, Computer Science and Engineering, for her\nmotivating discussions, overwhelming suggestions, ingenious encouragement, invaluable\nsupervision, and exemplary guidance throughout the project work.\nWe would like to extend our heartfelt gratitude to J. Thangakumar, Ph.D., Professor & Head,\nDepartment of Computer Science and Engineering for his valuable suggestions and support\nin successfully completing the project.\nWe thank the management of HINDUSTAN INSTITUTE OF TECHNOLOGY AND\nSCIENCE for providing us the necessary facilities and support required for the successful\ncompletion of the project.\nAs a final word, we would like to thank each and every individual who has been a source of\nsupport and encouragement and helped us to achieve our goal",
+        "chunk_index": 5
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_6",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " a final word, we would like to thank each and every individual who has been a source of\nsupport and encouragement and helped us to achieve our goal and complete our project work\nsuccessfully.\n4\nABSTRACT\nThe Handwritten Code Evaluator revolutionizes the assessment of handwritten programming\nassignments by leveraging Optical Character Recognition (OCR) and Machine Learning (ML).\nTraditional manual evaluation is labor-intensive and error-prone; our system automates this\nprocess with the following advancements:\n● Digitization: Converts handwritten code into editable digital text using advanced OCR\ntechniques (e.g., Tesseract, Google Vision API).\n● Code Evaluation: Compiles and executes the digitized code, checking for syntax errors,\nlogical correctness, and efficiency.\n● Feedback Generation",
+        "chunk_index": 6
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_7",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " Vision API).\n● Code Evaluation: Compiles and executes the digitized code, checking for syntax errors,\nlogical correctness, and efficiency.\n● Feedback Generation: Utilizes Natural Language Processing (NLP) to provide detailed,\nactionable feedback to students, mimicking human grading.\n● Scalability: Designed to handle bulk submissions, reducing grading time for educators\nby over 70%.\nThis project bridges the gap between traditional handwritten submissions and modern automated\nevaluation, ensuring accuracy, fairness, and efficiency in academic assessments.\n5\nCHAPTER 1 - INTRODUCTION\n1.1 INTRODUCTION\nThe Handwritten Code Evaluator is an AI - powered system developed to interpret and assess\nhandwritten programming code. By combining Optical Character Recognition (OCR) with",
+        "chunk_index": 7
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_8",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": "written Code Evaluator is an AI - powered system developed to interpret and assess\nhandwritten programming code. By combining Optical Character Recognition (OCR) with\nNatural Language Processing (NLP), it converts handwritten snippets into executable digital\ncode, enabling real-time syntax validation and logical analysis.\nThis tool bridges traditional writing with modern coding environments, allowing students and\ndevelopers to write code naturally—on paper, tablets, or whiteboards—while receiving\nimmediate feedback. It enhances accessibility, streamlines educational assessments, and supports\npersonalized learning by automating code evaluation and reducing manual grading efforts.\nAs handwriting recognition technology advances, the Handwritten Code Evaluator is set to\nredefine how programming is taught and learned, promoting a more inclusive, intuitive",
+        "chunk_index": 8
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_9",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " handwriting recognition technology advances, the Handwritten Code Evaluator is set to\nredefine how programming is taught and learned, promoting a more inclusive, intuitive, and\ninteractive coding experience.\n1.2 PROBLEM STATEMENT\nManual evaluation of handwritten code submissions presents significant challenges:\n➢ Time Consumption: Educators spend hours deciphering and grading assignments.\n➢ Subjectivity: Grading inconsistencies arise due to human interpretation.\n6\n➢ Error-Prone: Misread characters (e.g., ‘l’ vs. ‘1’) lead to incorrect evaluations.Our\nsolution automates the entire pipeline, from digitization to feedback generation, ensuring\nconsistent, objective, and efficient assessments.\n1.3 MOTIVATION OF THE WORK\n(cid:",
+        "chunk_index": 9
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_10",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": ", from digitization to feedback generation, ensuring\nconsistent, objective, and efficient assessments.\n1.3 MOTIVATION OF THE WORK\n(cid:0) Bridging Traditional and Digital Coding: To connect handwritten code with digital\nplatforms and reduce the gap between pen-and-paper programming and modern IDEs.\n(cid:0) Improving Learning Experience: To provide instant feedback on handwritten code,\nenabling better understanding of syntax and logic for students.\n(cid:0) Automating Manual Evaluation: To assist educators by automating the evaluation of\nhandwritten code in exams or assignments, saving time and ensuring consistency.\n1.4 OBJECTIVES\nTo design a system capable of recognizing handwritten programming code using OCR and\nmachine learning techniques.\n➢ To",
+        "chunk_index": 10
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_11",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " ensuring consistency.\n1.4 OBJECTIVES\nTo design a system capable of recognizing handwritten programming code using OCR and\nmachine learning techniques.\n➢ To convert handwritten code into editable and executable digital code with high accuracy.\n➢ To provide real-time feedback and error detection for educational or practical use.\n➢ To support multiple input methods, including scanned images, and photos.\n➢ To develop a user-friendly interface suitable for students, educators, and developers.\n7\nCHAPTER 2 - LITERATURE SURVEY\n2.1 LITERATURE SURVEY\nReference Approach Strengths Limitations Relevance to\nOur Work\nMicrosoft Transformer - State-of-the-art Computationally Core\nTrOCR (2021) based OCR handwriting intensive,",
+        "chunk_index": 11
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_12",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " Relevance to\nOur Work\nMicrosoft Transformer - State-of-the-art Computationally Core\nTrOCR (2021) based OCR handwriting intensive, large model technology for\nrecognition, size our system\nend - to - end\ntraining\nTesseract OCR LSTM - based Open - source, Weak on handwriting, Baseline\n(HP) OCR customizable needs preprocessing approach\n\"Handwritten CNN + RNN Good for Complex pipeline Inspired our\nCode hybrid indentation post-processing\nRecognition\" detection\n(ACM 2020)\nTable 1: Literature Survey\n8\n2.2 SUMMARY\nOur Handwritten Code Evaluator builds on key OCR advancements. Microsoft TrOCR (2021),\na transformer-based model, offers high handwriting recognition accuracy",
+        "chunk_index": 12
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_13",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": "\nOur Handwritten Code Evaluator builds on key OCR advancements. Microsoft TrOCR (2021),\na transformer-based model, offers high handwriting recognition accuracy and forms the core of\nour system, despite its computational demands. Tesseract OCR (HP), an open-source\nLSTM-based tool, serves as a customizable baseline but struggles with handwriting. The ACM\n2020 paper on handwritten code recognition, using a CNN-RNN hybrid, effectively handles code\nstructure and inspired our post-processing and syntax correction modules. These works\ncollectively shaped our model’s architecture and strategy.\n9\nCHAPTER 3 - DESIGN AND METHODOLOGY\n3.1 MODEL DESCRIPTION\nThe Handwritten Code Evaluator consists of multiple components working together to recognize,\nevaluate,",
+        "chunk_index": 13
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_14",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " - DESIGN AND METHODOLOGY\n3.1 MODEL DESCRIPTION\nThe Handwritten Code Evaluator consists of multiple components working together to recognize,\nevaluate, and correct handwritten programming code. Below is a detailed breakdown of the\nmodel architecture, explaining its key components, data flow, and functionalities.\n➢ Dataset Collection:\n○ Dataset Creation: Collect handwritten code samples, ensuring diversity in styles\nand formats. This dataset should include a wide range of programming languages,\nprimarily focusing on Python.\n➢ Preprocessing:\n○ Image Normalization: Clean and normalize the scanned or photographed images\nto ensure consistency in contrast, size, and resolution.\n○ Augmentation: Use techniques like rotation, scaling, and cropping to artificially\nexpand the dataset and",
+        "chunk_index": 14
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_15",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " consistency in contrast, size, and resolution.\n○ Augmentation: Use techniques like rotation, scaling, and cropping to artificially\nexpand the dataset and improve the model's robustness.\n➢ Model Training:\n○ Deep Learning Models: Utilize deep learning models like CNNs or Recurrent\nNeural Networks (RNNs) to recognize handwriting and map it to corresponding\ncode.\n10\n○ Natural Language Processing (NLP): Incorporate NLP techniques to understand\nthe structure of the code, ensuring that the evaluator can parse logical syntax and\nidentify errors or inconsistencies.\n➢ Error Handling and Code Evaluation:\n○ Syntax Checking: Ensure that the recognized code is syntactically correct and can\nbe compiled or interpreted properly",
+        "chunk_index": 15
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_16",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": "� Error Handling and Code Evaluation:\n○ Syntax Checking: Ensure that the recognized code is syntactically correct and can\nbe compiled or interpreted properly.\n○ Automated Feedback: Provide feedback for improvements, suggestions, or\ncorrections based on the recognized code.\n➢ Output:\n○ Recognized Code: The final output is the clean, parsed programming code in the\ncorrect syntax.\n○ Error Feedback: The model also outputs error messages if the code contains\nsyntax or semantic errors and provides recommendations for fixing them.\n➢ Model Deployment:\n○ The model is deployed as a web application, allowing users to input handwritten\ncode images and receive immediate feedback.\n○ The backend handles image uploads, model inference, and provides real-time",
+        "chunk_index": 16
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_17",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " application, allowing users to input handwritten\ncode images and receive immediate feedback.\n○ The backend handles image uploads, model inference, and provides real-time\nfeedback to users via a web interface.\n11\n3.2 DATASET DETAIL\nHandwritten Code Dataset: A curated dataset created by collecting real handwritten code\nsamples from students, developers, or volunteers.\n● Format: Images in (JPG/PNG).\n● Why it’s important: Public datasets for handwritten code are limited, so creating your\nown ensures the model is trained on realistic and relevant data.\n3.3 TOOLS\n➢ Programming language and tools:\n○ HTML & CSS: Used to design the frontend interface for uploading images and\ndisplaying results.\n○",
+        "chunk_index": 17
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_18",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": "➢ Programming language and tools:\n○ HTML & CSS: Used to design the frontend interface for uploading images and\ndisplaying results.\n○ Python: Backend language used for OCR processing, code validation, and\nhandling model logic.\n○ VS Code: An all-in-one IDE used for writing, debugging, and managing both\nfrontend and backend code efficiently.\n12\n➢ Modules/Libraries:\n○ Flask: Lightweight web frameworks for deploying the model as a backend\nservice for real-time inference.\n○ PyTorch : PyTorch is an open-source deep learning framework developed by\nMeta (Facebook).\n○ Numpy: NumPy (Numerical Python) is a fundamental library for scientific\ncomputing in Python.\n",
+        "chunk_index": 18
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_19",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " by\nMeta (Facebook).\n○ Numpy: NumPy (Numerical Python) is a fundamental library for scientific\ncomputing in Python.\n○ Tesseract OCR: An open-source, LSTM-based OCR engine used as a baseline\nfor comparison and basic text extraction.\n○ OpenCV: Used for preprocessing handwritten code images, including resizing,\nnoise reduction, binarization, and segmentation.\n13\n3.4 ARCHITECTURE DIAGRAM\nFig 1: Architecture diagram\n14\nCHAPTER 4 - RESULTS AND ANALYSIS\n4.1 EXPERIMENTAL SETUP AND ANALYSIS\nComponents of the Experimental Setup\na. Dataset\n● Data Type: Images of handwritten Python code snippets.\n● Data Collection: Samples were collected",
+        "chunk_index": 19
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_20",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": "YSIS\nComponents of the Experimental Setup\na. Dataset\n● Data Type: Images of handwritten Python code snippets.\n● Data Collection: Samples were collected from multiple individuals with varying\nhandwriting styles.\n● Preprocessing:\n○ Grayscale conversion.\n○ Noise reduction, rotation, scaling, and normalization.\nb. Model Configuration\nArchitecture:\n○ CNN layers for feature extraction.\n○ LSTM layers for sequence modeling of code lines.\nc. Code Evaluation Backend\n● Extracted text from handwriting was passed to a secure Python execution environment.\n● Code was parsed using Python’s module and executed in a sandbox using exec().\n15\nd. Frontend Interface\n● Handwriting input provided only Image upload\n● UI: It has an upload handwritten",
+        "chunk_index": 20
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_21",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " a sandbox using exec().\n15\nd. Frontend Interface\n● Handwriting input provided only Image upload\n● UI: It has an upload handwritten code, recognized code, and execution output\n4.2 RESULTS\nFig 2: Handwritten code Evaluator UI\n16\n4.3 SUMMARY\nThe Handwritten Code Evaluator project aimed to recognize and evaluate handwritten Python\ncode using a deep learning-based system. The experimental setup consisted of three main\ncomponents: a diverse handwritten dataset, a CNN-LSTM model trained with CTC loss for text\nrecognition, and a secure backend for code evaluation.\nHandwritten code samples were preprocessed (grayscale, normalization, augmentation) and used\nto train a model capable of converting handwritten",
+        "chunk_index": 21
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_22",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " for code evaluation.\nHandwritten code samples were preprocessed (grayscale, normalization, augmentation) and used\nto train a model capable of converting handwritten text to digital code. The recognized code was\nthen parsed and executed in a secure Python environment, with outputs or errors returned to the\nuser through a simple frontend interface.\nKey Findings:\nChallenges: Errors mainly came from unclear handwriting, special character misinterpretation,\nand indentation issues.\nLatency: Average processing time was 2–3 seconds per input.\n17\nCHAPTER 5 - CONCLUSION\n5.1 CONCLUSION\nThe Handwritten Code Evaluator project has successfully developed a system capable of\nrecognizing handwritten code and evaluating it in real time. By utilizing deep learning\n",
+        "chunk_index": 22
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_23",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " Handwritten Code Evaluator project has successfully developed a system capable of\nrecognizing handwritten code and evaluating it in real time. By utilizing deep learning\ntechniques, the project has achieved accurate recognition of diverse handwriting styles,\nparticularly in Python code. The backend system processes and evaluates the code efficiently,\nwhile the frontend interface ensures an intuitive user experience.\nThe project has made significant progress in expanding the dataset, incorporating a variety of\nPython code snippets and handwritten samples to improve the model's accuracy. This system\nholds potential for real-world applications, including educational tools, assistance for individuals\nwith disabilities, and automating code review processes.\n5.2 FUTURE ENHANCEMENTS\n➢ Expansion of Supported Programming Languages: Currently focused on Python, the",
+        "chunk_index": 23
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_24",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " automating code review processes.\n5.2 FUTURE ENHANCEMENTS\n➢ Expansion of Supported Programming Languages: Currently focused on Python, the\nsystem can be expanded to support other popular programming languages like C, C++,\nJava, etc…..\n➢ Improved Handwriting Recognition: To enhance the system's ability to handle a wider\nrange of handwriting styles, it could be trained on more diverse handwriting datasets.\n18\n➢ Real-Time Suggestions: Implementing features for real-time syntax error detection and\nproviding suggestions for corrections would make the application more useful. For\nexample, if a user writes a function incorrectly, the system could suggest corrections and\nguide the user to fix the error immediately.\n➢ Cross-Platform",
+        "chunk_index": 24
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_25",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": ", if a user writes a function incorrectly, the system could suggest corrections and\nguide the user to fix the error immediately.\n➢ Cross-Platform Integration: Making the system available on multiple platforms (e.g.,\nmobile, desktop, and cloud-based versions) could expand its accessibility and use cases,\nincluding integrating with IDEs, online coding platforms, or educational tools.\n➢ Cloud Storage and Sharing Capabilities: Enabling users to save, access, and share their\nhandwritten code snippets through cloud-based storage could promote collaboration,\nespecially in educational and team-based settings. Integration with version control\nsystems like Git could be considered.\n19\nAPPENDIX A - FRONTEND CODE\n20\nAPPENDIX B - BACKEND CODE\n21",
+        "chunk_index": 25
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_26",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": "systems like Git could be considered.\n19\nAPPENDIX A - FRONTEND CODE\n20\nAPPENDIX B - BACKEND CODE\n21\n22\nAPPENDIX C - TEAM DETAILS\nTeam Member 1:\nName: Siddharth Senguttuvan\nRole: Design and implement the user interface for uploading and displaying handwritten code\nimages and collect the handwritten dataset.\nMail Id: 22143049@student.hindustanuniv.ac.in\nTeam Member 2:\nName: Syed Afreethi D\nRole: Develop the backend system to integrate with the handwritten code recognition model\nand collect the handwritten dataset.\nMail Id: 22143019@student.hindustanuniv.ac.in\n23",
+        "chunk_index": 26
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_27",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " the handwritten code recognition model\nand collect the handwritten dataset.\nMail Id: 22143019@student.hindustanuniv.ac.in\n23\nReferences\n1. Cheng, G., Zhou, Y., & Liu, X. (2021). A systematic review of handwriting recognition\ntechniques for programming languages. Journal of Machine Learning Research, 22(1),\n187-205.\n2. Zhang, H., Li, S., & Yang, L. (2022). Deep learning-based methods for handwritten code\nrecognition: A survey. International Journal of Computer Vision and Image Processing,\n11(3), 43-59.\n3. Ravindran, S., & Rao, M. (2023). A comparative",
+        "chunk_index": 27
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_28",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " Processing,\n11(3), 43-59.\n3. Ravindran, S., & Rao, M. (2023). A comparative study of OCR and neural network\nmodels for recognizing handwritten code in educational settings. Journal of Educational\nTechnology and Development, 39(4), 217-230.\n4. Zou, D., Liu, J., & Zhang, Y. (2023). Integrating handwritten code recognition into\nautomated grading systems: Challenges and opportunities. Computers & Education, 172,\n104356.\n5. Smith, A., & Jones, R. (2021). Towards a model for recognizing handwritten code\nsnippets: An application of deep convolutional neural networks. Journal of Artificial\nInt",
+        "chunk_index": 28
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_29",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": ". (2021). Towards a model for recognizing handwritten code\nsnippets: An application of deep convolutional neural networks. Journal of Artificial\nIntelligence and Computing, 5(2), 121-135.\n24\n6. Tan, B., Lee, Y., & Wang, X. (2022). Enhancing handwritten code recognition with\nreinforcement learning for improved grading accuracy. IEEE Transactions on Learning\nTechnologies, 15(4), 426-436.\n7. Dey, A., & Saha, S. (2020). Optical character recognition for handwritten code:\nTechniques, challenges, and future directions. Journal of Pattern Recognition, 65(1),\n45-62.\n8. Kumar,",
+        "chunk_index": 29
+    },
+    {
+        "chunk_id": "Design Project - Sem 6.pdf_chunk_30",
+        "source_file": "Design Project - Sem 6.pdf",
+        "text": " handwritten code:\nTechniques, challenges, and future directions. Journal of Pattern Recognition, 65(1),\n45-62.\n8. Kumar, A., & Thakur, S. (2023). Leveraging transfer learning for handwritten code\nrecognition in programming education systems. International Journal of Educational Data\nMining, 19(2), 130-144.\n25\n",
+        "chunk_index": 30
+    },
+    {
+        "chunk_id": "docmind_privacy.txt_chunk_0",
+        "source_file": "docmind_privacy.txt",
+        "text": "DocMind Privacy Policy\nLast Updated: August 1, 2026\n\n1. Data Collection\nWhen you use DocMind's RAG and embedding services, we collect:\n- Document uploads (PDFs, TXT, DOCX) processed through our pipelines\n- API usage telemetry (latency, request counts)\n- Account information (name, email, billing details)\n\n2. Data Usage and LLM Training\nDocMind strictly separates customer data. Your uploaded documents and vector embeddings are stored in isolated ChromaDB namespaces. \nIMPORTANT: DocMind does NOT use customer documents or user-submitted queries to train our foundational models (like DocMind-Mini or DocMind-Pro). Your data remains yours.\n\n3. Data Retention\nBy default",
+        "chunk_index": 0
+    },
+    {
+        "chunk_id": "docmind_privacy.txt_chunk_1",
+        "source_file": "docmind_privacy.txt",
+        "text": " queries to train our foundational models (like DocMind-Mini or DocMind-Pro). Your data remains yours.\n\n3. Data Retention\nBy default, documents are retained for the active life of your account. If you delete a document from your dashboard, the raw file and its corresponding vector embeddings are hard-deleted within 72 hours.\nIf an account is cancelled, all associated data is wiped after 30 days.\n\n4. Third-Party Subprocessors\nWe use the following subprocessors:\n- AWS (Hosting & Storage)\n- Stripe (Payment Processing)\n- Together AI (Optional Fallback LLM API)\n",
+        "chunk_index": 1
+    },
+    {
+        "chunk_id": "docmind_privacy.txt_chunk_2",
+        "source_file": "docmind_privacy.txt",
+        "text": "LM API)\n",
+        "chunk_index": 2
+    },
+    {
+        "chunk_id": "docmind_sla.txt_chunk_0",
+        "source_file": "docmind_sla.txt",
+        "text": "DocMind Service Level Agreement (SLA)\nEffective Date: March 15, 2026\n\n1. Service Commitment\nDocMind commits to providing a 99.9% uptime for our Enterprise and Pro tier customers. Uptime is measured monthly, excluding scheduled maintenance.\n\n2. Scheduled Maintenance\nScheduled maintenance will occur during low-traffic windows (typically Saturday 2:00 AM - 4:00 AM UTC). Customers will be notified at least 48 hours in advance via the status page.\n\n3. Service Credits\nIf DocMind fails to meet the 99.9% uptime commitment in a billing month, eligible customers may request a Service Credit:\n- 99.0% to 99.89%: 10%",
+        "chunk_index": 0
+    },
+    {
+        "chunk_id": "docmind_sla.txt_chunk_1",
+        "source_file": "docmind_sla.txt",
+        "text": " commitment in a billing month, eligible customers may request a Service Credit:\n- 99.0% to 99.89%: 10% credit of the monthly fee\n- 95.0% to 98.99%: 25% credit of the monthly fee\n- Below 95.0%: 50% credit of the monthly fee\n\nTo claim a credit, customers must submit a support ticket within 30 days of the incident. Credits cannot be exchanged for cash and will be applied to future invoices.\n",
+        "chunk_index": 1
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_0",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "Comparative Evaluation of\nConvolutional, Recurrent, and Hybrid\nDeep Learning Architectures for Thoracic\nDisease Detection in Chest Radiographs\nSTANIYAMOL JOSEPH ABDUL KARIM\nSYED AFREETHI D\nB.TECH CSE(AI&ML) B.TECH\nB.TECH CSE(AI&ML)\nHINDUSTAN INSTITUTE CSE(AI&ML)\nHINDUSTAN INSTITUTE\nOF TECHNOLOGY AND HINDUSTAN INSTITUTE\nOF TECHNOLOGY AND\nSCIENCE CHENNAI, INDIA OF TECHNOLOGY AND\nSCIENCE CHENNAI, INDIA\nstaniyajosephtv@gmail.co SCIENCE",
+        "chunk_index": 0
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_1",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": ", INDIA OF TECHNOLOGY AND\nSCIENCE CHENNAI, INDIA\nstaniyajosephtv@gmail.co SCIENCE CHENNAI, INDIA\nafreethisyed@gmail.com\nm abdulkarimdileep@gmail.com\nSIDDHARTH S\nB.TECH Ms. AISHWARYA R\nCSE(AI&ML) (MENTOR) ASSISTANT\nHINDUSTAN INSTITUTE PROFESSOR\nOF TECHNOLOGY AND DEPARTMENT OF DISC\nSCIENCE CHENNAI, INDIA HINDUSTAN INSTITUTE\nsiddharthseng@gmail.com OF TECHNOLOGY AND\nSCIENCE CHENNAI, INDIA\naish",
+        "chunk_index": 1
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_2",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "INDUSTAN INSTITUTE\nsiddharthseng@gmail.com OF TECHNOLOGY AND\nSCIENCE CHENNAI, INDIA\naishwaryar.rajendran@gmail.c\nom\nAbstract\nEarly and accurate detection of thoracic diseases remains a significant clinical challenge, particularly in\nresource-constrained settings where radiologist expertise is limited. This paper presents a systematic\nempirical evaluation of four distinct deep learning architectures for automated multi-class classification of\nchest radiographs: a pure convolutional neural network baseline (ResNet50), a novel recurrent neural\nnetwork approach treating flattened radiographs as temporal sequences, and two hybrid variants combining\nconvolutional and Transformer-based mechanisms at different architectural levels. Our experiments\nleverage a combined",
+        "chunk_index": 2
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_3",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "ographs as temporal sequences, and two hybrid variants combining\nconvolutional and Transformer-based mechanisms at different architectural levels. Our experiments\nleverage a combined dataset of 2,768 chest X-ray images spanning three disease classes—COVID-19,\npneumonia, and normal radiographs—sourced from publicly available medical imaging repositories. The\npure CNN baseline achieves 96.6% test accuracy with robust per-class performance. In contrast, the RNN\napproach yields 91.7% accuracy, revealing that sequential modeling alone is insufficient for spatial medical\nimaging tasks. Both hybrid architectures substantially improve upon these baselines: the true\nCNN-Transformer hybrid reaches 97.5% macro-averaged F1 score,",
+        "chunk_index": 3
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_4",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " hybrid architectures substantially improve upon these baselines: the true\nCNN-Transformer hybrid reaches 97.5% macro-averaged F1 score, while the system-level ensemble of\nResNet50 and DenseNet121 achieves the highest performance at 97.7% accuracy with consistent class-wise\nsensitivity. Our findings indicate that architectural diversity and attention-based feature refinement together\nconfer meaningful performance gains in thoracic disease detection. This work contributes novel insights\ninto the comparative efficacy of hybrid deep learning models in medical image analysis and offers practical\nguidance for deploying automated screening systems in clinical settings.\nKeywords: chest X-ray classification, deep learning, convolutional neural networks, recurrent neural\nnetworks, Transformer, hybrid architectures, thoracic disease",
+        "chunk_index": 4
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_5",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": ".\nKeywords: chest X-ray classification, deep learning, convolutional neural networks, recurrent neural\nnetworks, Transformer, hybrid architectures, thoracic disease detection, COVID-19, pneumonia.\n1. Introduction\nThoracic diseases, including COVID-19, pneumonia, and tuberculosis, remain leading causes of morbidity\nand mortality worldwide[1][2]. Chest X-ray radiography is the most widely deployed diagnostic imaging\nmodality for detecting such conditions due to its accessibility, low cost, and non-invasive nature[3].\nHowever, the interpretation of radiographs is highly subjective and requires substantial expertise; diagnostic\nerrors are common, particularly in high-volume clinical settings or regions with radiologist shortages[4].\nConsequently, computer-aided diagnostic",
+        "chunk_index": 5
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_6",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "; diagnostic\nerrors are common, particularly in high-volume clinical settings or regions with radiologist shortages[4].\nConsequently, computer-aided diagnostic (CAD) systems that augment radiologist decision-making have\nbecome an active research area with significant clinical potential[5].\nDeep learning has emerged as the dominant approach for automated medical image analysis over the past\ndecade[6][7]. Convolutional neural networks (CNNs) have achieved remarkable success in image\nclassification tasks, including medical imaging, by learning hierarchical spatial features directly from pixel\ndata[8]. However, CNNs are inherently spatial in their operation and may struggle to model long-range\ndependencies or temporal patterns that could be clinically relevant[9]. Recurrent neural networks (",
+        "chunk_index": 6
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_7",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " inherently spatial in their operation and may struggle to model long-range\ndependencies or temporal patterns that could be clinically relevant[9]. Recurrent neural networks (RNNs)\nand their variants, such as long short-term memory (LSTM) cells and gated recurrent units (GRUs), excel at\ncapturing sequential dependencies and have shown promise in medical time-series analysis[10]. More\nrecently, Transformer architectures equipped with self-attention mechanisms have demonstrated superior\nperformance in numerous computer vision tasks by enabling direct modeling of global relationships\nbetween image regions[11][12].\nDespite the proliferation of individual architectures, few systematic studies directly compare these\nparadigms on the same medical imaging dataset using equivalent preprocessing, data augmentation, and\nevaluation protocols",
+        "chunk_index": 7
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_8",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " architectures, few systematic studies directly compare these\nparadigms on the same medical imaging dataset using equivalent preprocessing, data augmentation, and\nevaluation protocols. Furthermore, hybrid approaches that combine complementary architectural strengths\nremain underexplored in the thoracic disease detection domain[13]. This work addresses these gaps by\nconducting a rigorous comparative evaluation of pure CNN, pure RNN, and two hybrid variants on a\nstandardized multi-class chest X-ray classification task. Our primary objectives are:\n(i) To benchmark a ResNet50 baseline CNN and establish its performance as a reference standard;\n(ii) To evaluate a novel RNN approach in which radiographs are reinterpreted as spatial sequences, testing\nwhether temporal modeling adds value beyond convolutional feature extraction;\n",
+        "chunk_index": 8
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_9",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " evaluate a novel RNN approach in which radiographs are reinterpreted as spatial sequences, testing\nwhether temporal modeling adds value beyond convolutional feature extraction;\n(iii) To develop and assess two hybrid architectures—a true CNN-Transformer fusion and a system-level\nensemble—to determine whether combining architectural paradigms yields synergistic performance\nimprovements;\n(iv) To provide transparent, reproducible results suitable for comparison with future studies and potential\nclinical deployment.\n2. Related Work\n2.1\nCNN-based approaches to chest X-ray classification\nThe application of deep convolutional neural networks to medical image analysis has been extensively\nstudied[14][15]. Rajpurkar et al.[16] pioneered the use of deep CNNs for chest X-ray",
+        "chunk_index": 9
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_10",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " has been extensively\nstudied[14][15]. Rajpurkar et al.[16] pioneered the use of deep CNNs for chest X-ray classification with\ntheir CheXNet model, a 121-layer DenseNet pretrained on ImageNet, which achieved radiologist-level\nperformance on a large-scale dataset. Subsequent work has leveraged transfer learning, fine-tuning\npretrained backbones such as ResNet, EfficientNet, and Vision Transformers on domain-specific thoracic\ndatasets[17][18]. The general consensus in the literature is that CNNs with sufficient model capacity and\nappropriate regularization converge rapidly and achieve high accuracy on chest X-ray tasks, often exceeding\n95%[19][20].\n2.2\nAttention and Transformer",
+        "chunk_index": 10
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_11",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " regularization converge rapidly and achieve high accuracy on chest X-ray tasks, often exceeding\n95%[19][20].\n2.2\nAttention and Transformer mechanisms in medical imaging\nThe introduction of self-attention and Transformer architectures has catalyzed renewed interest in medical\nimage analysis[21]. Dosovitskiy et al.[22] proposed Vision Transformers (ViTs), which partition images into\npatches and apply pure Transformer encoders, achieving competitive results on ImageNet and medical\nimaging benchmarks. Hybrid approaches that interleave convolutional and Transformer blocks have proven\nparticularly effective, combining the sample efficiency of local receptive fields with the global modeling\ncapacity of attention[23][24]. In the thoracic imaging domain, recent work has explored Vi",
+        "chunk_index": 11
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_12",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " efficiency of local receptive fields with the global modeling\ncapacity of attention[23][24]. In the thoracic imaging domain, recent work has explored ViTs and hybrid\nCNN-Transformer models, with mixed findings regarding the trade-off between accuracy, model size, and\ncomputational cost[25][26].\n2.3\nRNN and sequence-based approaches in medical imaging\nWhile RNNs have dominated sequential data analysis in natural language processing and time-series\nforecasting, their application to static medical images remains limited[27]. A few studies have attempted to\ncast image classification as a sequential task—for instance, by processing image patches in raster order or\ntreating pixel rows as temporal sequences[28]. However, the reported benefits are marginal",
+        "chunk_index": 12
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_13",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " task—for instance, by processing image patches in raster order or\ntreating pixel rows as temporal sequences[28]. However, the reported benefits are marginal, and RNNs are\ngenerally considered ill-suited for spatial image data without significant adaptation[29]. Our work revisits\nthis question empirically on chest radiographs.\n2.4\nEnsemble and hybrid methods\nEnsemble methods, which aggregate predictions from multiple models, have long been recognized as a\nreliable path to performance improvements in machine learning[30][31]. In medical imaging, ensembles of\nCNNs have been shown to reduce variance and improve robustness, particularly when the constituent\nmodels are trained on different initializations or architectural variants[32]. Hybrid architectures",
+        "chunk_index": 13
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_14",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " been shown to reduce variance and improve robustness, particularly when the constituent\nmodels are trained on different initializations or architectural variants[32]. Hybrid architectures that\ncombine CNN and attention mechanisms within a single end-to-end model have also shown promise,\nthough systematic comparisons on medical datasets remain sparse[33][34].\n3. Materials and Methods\n3.1\nDataset and preprocessing\nOur study utilizes chest X-ray images from two publicly accessible datasets: the COVID-19 Radiography\nDatabase and the Chest X-Ray Images (Pneumonia) dataset[35][36]. The combined corpus comprises 2,768\nradiographs distributed across three classes:\n● COVID-19: 543 images\n● Pneumonia: 842 images\n",
+        "chunk_index": 14
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_15",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "2,768\nradiographs distributed across three classes:\n● COVID-19: 543 images\n● Pneumonia: 842 images\n● Normal: 1,383 images\nAll images were resized to 224 × 224 pixels to ensure uniform input dimensions across experiments. Pixel\nintensities were normalized to the range [0, 1] via min-max scaling. We employed standard data\naugmentation techniques—random horizontal flips, rotations (±10°), and slight brightness/contrast\nadjustments—to enhance model robustness and mitigate overfitting. The dataset was partitioned into\ntraining (70%), validation (15%), and test (15%) subsets with stratified splitting to maintain class balance\nacross all",
+        "chunk_index": 15
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_16",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " partitioned into\ntraining (70%), validation (15%), and test (15%) subsets with stratified splitting to maintain class balance\nacross all three folds. No patient-level identifiers or protected health information were retained; all\nexperiments comply with institutional data governance policies.\n3.2\nModel architectures\nBaseline CNN (ResNet50)\nResNet50, a 50-layer residual convolutional network, was selected as our CNN baseline due to its\nwell-established performance on image classification benchmarks and widespread adoption in medical\nimaging[37]. The network was initialized with ImageNet pretrained weights to leverage transfer learning.\nThe final classification head was replaced with a 3-way softmax layer. The model was trained using\n−4\ncategorical cross",
+        "chunk_index": 16
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_17",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " leverage transfer learning.\nThe final classification head was replaced with a 3-way softmax layer. The model was trained using\n−4\ncategorical cross-entropy loss and the Adam optimizer (learning rate = 10 ) for a maximum of 20 epochs\nwith early stopping (patience = 3 epochs, monitoring validation loss). Batch size was set to 32, and standard\n−5\nL2 regularization (weight decay = 10 ) was applied. The best checkpoint, determined by validation loss,\nwas restored before final evaluation.\nRecurrent neural network (pure RNN)\nA novel RNN approach was developed to explore whether sequential modeling of chest radiographs could\noutperform or complement CNN feature extraction. Each 224 × 224",
+        "chunk_index": 17
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_18",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " RNN approach was developed to explore whether sequential modeling of chest radiographs could\noutperform or complement CNN feature extraction. Each 224 × 224 × 3 radiograph was reshaped into a\nsequence of 224 timesteps, where each timestep corresponds to a row of 224 × 3 = 672 flattened pixel\nvalues. A Bidirectional LSTM (BiLSTM) encoder with 256 hidden units processed this sequence, followed\nby global average pooling to produce a fixed-length feature vector. This vector was fed through two fully\nconnected layers (512 units, ReLU activation) with dropout (rate = 0.4) before the final 3-way softmax\nclassification layer. Training employed the same optimization protocol as the CNN",
+        "chunk_index": 18
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_19",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " with dropout (rate = 0.4) before the final 3-way softmax\nclassification layer. Training employed the same optimization protocol as the CNN baseline: Adam\n−4\noptimizer, 10 learning rate, categorical cross-entropy loss, batch size 32, and early stopping after 20\nepochs. This architecture was trained from scratch (no pretrained weights) given the unconventional\nimage-to-sequence transformation.\nTrue CNN-Transformer hybrid\nA CNN-Transformer hybrid architecture was constructed by concatenating a ResNet50 feature extractor\nwith a Transformer-based refinement module. ResNet50 processed each 224 × 224 × 3 radiograph and\noutput a 2048-dimensional feature vector via global average pooling. To feed this into",
+        "chunk_index": 19
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_20",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " each 224 × 224 × 3 radiograph and\noutput a 2048-dimensional feature vector via global average pooling. To feed this into a Transformer\nencoder, the vector was treated as a single \"patch\" representation and augmented with positional\nembeddings. A Transformer encoder block (number of heads = 8, hidden dimension = 512, feed-forward\ndimension = 2048) then refined these features via multi-head self-attention and feed-forward networks for 4\nstacked layers. The refined features were passed through a 512-unit fully connected layer (ReLU) with\ndropout (0.3) and finally a 3-way softmax output. This model was trained end-to-end for up to 20 epochs\n",
+        "chunk_index": 20
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_21",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "\ndropout (0.3) and finally a 3-way softmax output. This model was trained end-to-end for up to 20 epochs\n−4\nwith the same optimizer settings (Adam, 10 , early stopping) and batch size 32.\nSystem-level ensemble (ResNet50 + DenseNet121)\nA system-level ensemble was implemented by training two independent CNN backbones—ResNet50 and\nDenseNet121—separately on the same training data and identical augmentation pipeline. Both models\nfollowed the baseline training protocol with early stopping. At inference time, predictions from both models\nwere averaged (equal weighting) to produce the final class probability. DenseNet121 was selected as the\ncomplementary architecture because its",
+        "chunk_index": 21
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_22",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " from both models\nwere averaged (equal weighting) to produce the final class probability. DenseNet121 was selected as the\ncomplementary architecture because its dense skip connections and different feature learning dynamics\noften capture different local patterns compared to ResNet.\n3.3\nTraining and evaluation protocol\nAll models were implemented in TensorFlow 2.x and trained on GPU hardware (NVIDIA CUDA). The\ntraining routine included:\n1. Initialization: Weights initialized with standard Glorot/He initialization; pretrained ImageNet\nweights loaded for CNN baselines.\n−4\n2. Optimization: Adam optimizer with initial learning rate 10 , with no explicit learning rate\nscheduling.\n−5\n3. Regularization: L2 weight decay (λ =",
+        "chunk_index": 22
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_23",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " initial learning rate 10 , with no explicit learning rate\nscheduling.\n−5\n3. Regularization: L2 weight decay (λ = 10 ), batch normalization where applicable, and dropout\n(rates between 0.3–0.4 in fully connected layers).\n4. Early stopping: Monitoring validation loss with patience = 3 epochs; best checkpoint restored\nafter training.\n5. Hyperparameter tuning: Minimal tuning was performed; epochs and image dimensions were\nkept fixed at 20 and 224 to ensure fair comparison.\nFor evaluation, we computed the following metrics on the held-out test set:\n● Overall accuracy: Fraction of correct predictions across all samples.\n● Per-class metrics: Precision, recall (sensitivity), and F",
+        "chunk_index": 23
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_24",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "-out test set:\n● Overall accuracy: Fraction of correct predictions across all samples.\n● Per-class metrics: Precision, recall (sensitivity), and F1 score for each disease class.\n● Macro-averaged metrics: Unweighted average across classes, giving equal weight to minority\nand majority classes.\n● Confusion matrices: Cross-tabulation of true and predicted labels to assess systematic\nclassification patterns.\nNo statistical significance testing was performed; instead, we report raw metrics and interpret observed\ndifferences in the context of model architecture and expected variance.\n4. Results\n4.1\nOverall accuracy and loss convergence\nAll four models trained successfully without divergence or instability. Training curves (Figure 1) reveal that\nthe ResNet50 baseline achieved rapid",
+        "chunk_index": 24
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_25",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " loss convergence\nAll four models trained successfully without divergence or instability. Training curves (Figure 1) reveal that\nthe ResNet50 baseline achieved rapid convergence, with validation accuracy stabilizing near 96% by epoch\n10 and test accuracy of 96.6%. The RNN variant converged more slowly, with a visible gap between\ntraining and validation curves persisting throughout training; final test accuracy reached 91.7%, indicating\nthat the sequential interpretation of radiographs provides less informative representations than spatial\nconvolutions. Both hybrid architectures exhibited smooth convergence with tightly coupled training and\nvalidation curves, suggesting stable optimization. The true CNN-Transformer hybrid attained test accuracy\nof 97.5%, while the ResNet50 + DenseNet121 ensemble",
+        "chunk_index": 25
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_26",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " suggesting stable optimization. The true CNN-Transformer hybrid attained test accuracy\nof 97.5%, while the ResNet50 + DenseNet121 ensemble achieved the highest overall performance at\n97.7% test accuracy.\nLoss curves (Figure 2) show monotonic decrease for all models, with ResNet50 and the ensemble reaching\nlow loss values (≈ 0. 05) by epoch 15, indicating effective learning. The RNN displayed a slower descent\nand higher final loss (≈ 0. 20), consistent with its lower accuracy. Early stopping was triggered between\nepochs 15–20 for all models, confirming the effectiveness of the patience-based criterion.\n4.2\nPer-class performance and confusion matrices",
+        "chunk_index": 26
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_27",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " between\nepochs 15–20 for all models, confirming the effectiveness of the patience-based criterion.\n4.2\nPer-class performance and confusion matrices ResNet50\nCNN baseline\nFig. 1. Training and validation accuracy curves of all CNN model.\nFig. 2. Confusion matrix of the CNN baseline.\nClassification performance is summarized in Table 1. The ResNet50 baseline achieved:\n● COVID-19: 97.9% precision, 97.9% recall, 97.8% F1 score (543 support samples)\n● Pneumonia: 96.5% precision, 96.5% recall, 96.8% F1 score (202 support samples)\n● Normal: ",
+        "chunk_index": 27
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_28",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "96.5% precision, 96.5% recall, 96.8% F1 score (202 support samples)\n● Normal: 97.7% precision, 97.5% recall, 97.6% F1 score (744 support samples)\nMacro-averaged F1 was 0.9741, indicating excellent performance across all three classes. The confusion\nmatrix (Figure 3) reveals minimal cross-class confusion; only 15 Normal samples were misclassified as\nCOVID-19 or Pneumonia, and similarly few COVID-19 samples were mislabeled.\nPure RNN (BiLSTM, 224 timesteps)\nFig. 3. Training and validation accuracy curves of RNN model",
+        "chunk_index": 28
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_29",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "labeled.\nPure RNN (BiLSTM, 224 timesteps)\nFig. 3. Training and validation accuracy curves of RNN model.\nFig. 4. Confusion matrix of the pure RNN model.\nThe RNN achieved lower overall accuracy (91.7%) with notable imbalance across classes:\n● COVID-19: 91.1% precision, 91.1% recall, 85.1% F1 score\n● Pneumonia: 96.9% precision, 96.9% recall, 95.3% F1 score\n● Normal: 88.8% precision, 88.8% recall, 92.2% F1 score\nMacro-aver",
+        "chunk_index": 29
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_30",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "\n● Normal: 88.8% precision, 88.8% recall, 92.2% F1 score\nMacro-averaged F1 was 0.9092. The confusion matrix (Figure 4) reveals a significant issue: the Normal\nclass exhibited the most misclassifications, with 106 normal radiographs incorrectly labeled as COVID-19\nand 49 misclassified as Pneumonia. This suggests that the RNN's sequential interpretation lacks sufficient\nspatial context for distinguishing healthy lungs from disease patterns. Conversely, pneumonia detection was\nrelatively robust, likely because its textural patterns are consistent along pixel-row sequences.\nTrue CNN-Transformer hybrid\nFig.5. Training and validation accuracy curves of",
+        "chunk_index": 30
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_31",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": ", likely because its textural patterns are consistent along pixel-row sequences.\nTrue CNN-Transformer hybrid\nFig.5. Training and validation accuracy curves of True CNN- Transformer hybrid model.\nFig. 6. Confusion matrix of the CNN–Transformer hybrid model.\nThis architecture improved over the CNN baseline:\n● COVID-19: 97.9% precision, 97.7% recall, 97.8% F1 score\n● Pneumonia: 96.5% precision, 96.5% recall, 96.8% F1 score\n● Normal: 97.7% precision, 97.5% recall, 97.6% F1 score\nMacro-averaged F1",
+        "chunk_index": 31
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_32",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": ": 97.7% precision, 97.5% recall, 97.6% F1 score\nMacro-averaged F1 was 0.9733, nearly matching the CNN baseline. The confusion matrix (Figure 5) shows\nsimilarly clean separation, with only 12 COVID-19 samples misclassified as Normal and 5 pneumonia\nsamples misidentified. The Transformer attention mechanism appears to refine CNN features without\nintroducing additional errors, suggesting complementary benefit in feature refinement.\nResNet50 + DenseNet121 ensemble\nFig.7. Training and validation accuracy curves of ResNet50 model.\nFig.8. Training and validation accuracy curves of DenseNet121 model.\nFig. 9. Confusion matrix of",
+        "chunk_index": 32
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_33",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " of ResNet50 model.\nFig.8. Training and validation accuracy curves of DenseNet121 model.\nFig. 9. Confusion matrix of the ResNet50 + DenseNet121 ensemble model.\nThe system-level ensemble yielded the best overall results:\n● COVID-19: 99.8% precision, 96.8% recall, 98.3% F1 score\n● Pneumonia: 98.5% precision, 97.8% recall, 98.1% F1 score\n● Normal: 98.1% precision, 97.1% recall, 97.6% F1 score\nMacro-averaged F1 was 0.9800, the highest among",
+        "chunk_index": 33
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_34",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": ".1% recall, 97.6% F1 score\nMacro-averaged F1 was 0.9800, the highest among all models. The confusion matrix (Figure 6)\ndemonstrates the tightest class separation; only 16 COVID-19 samples and 15 pneumonia samples were\nmisclassified, predominantly as Normal. This marginal improvement over the hybrid suggests that\narchitectural diversity between ResNet50 and DenseNet121 captures complementary representations, with\nthe averaging ensemble effectively suppressing independent prediction errors.\n4.3\nSummary comparison table\nTable 1, presents a side-by-side comparison of all four models:\nArchitectur Test Macro Macro Macro F1 Training Notes\ne Accuracy Precision Recall Time\n(%",
+        "chunk_index": 34
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_35",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " presents a side-by-side comparison of all four models:\nArchitectur Test Macro Macro Macro F1 Training Notes\ne Accuracy Precision Recall Time\n(%)\nResNet50 96.6 0.9741 0.9730 0.9735 ~15 min Fast\n(baseline) convergen\nce; strong\nbaseline\nPure RNN 91.7 0.9212 0.9227 0.9092 ~25 min Weaker\n(BiLSTM) Normal-cla\nss\nperforman\nce\nCNN-Tran 97.5 0.9742 0.9739 0.9733 ~18 min Marginal\nsformer improveme\nhybrid nt",
+        "chunk_index": 35
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_36",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "5 0.9742 0.9739 0.9733 ~18 min Marginal\nsformer improveme\nhybrid nt; added\nattention\nResNet50 97.7 0.9789 0.9783 0.9800 ~30 min Highest\n+ accuracy;\nDenseNet1 diversity\n21 gains\n5. Discussion\n5.1\nInterpretation of architecture-specific findings\nThe comparative results offer several insights into the relative merits of distinct deep learning paradigms for\nthoracic disease detection:\nCNN baseline performance: The ResNet50 baseline achieved 96.6% accuracy with balanced per-class\nperformance, confirming the well-established suitability of CNNs for spatial image analysis",
+        "chunk_index": 36
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_37",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " ResNet50 baseline achieved 96.6% accuracy with balanced per-class\nperformance, confirming the well-established suitability of CNNs for spatial image analysis. The rapid\nconvergence and low validation loss indicate that convolutional feature hierarchies—local edges at early\nlayers, progressively abstract textures and shapes at deeper layers—align well with the diagnostic patterns\nvisible in chest radiographs. This finding is consistent with extensive prior literature and validates ResNet50\nas a reliable reference standard[38][39].\nRNN limitations: The pure RNN approach, while novel in its application to static radiographs,\nunderperformed both CNN-based methods. The 91.7% accuracy and particularly poor Normal-class\ndetection (88.8%",
+        "chunk_index": 37
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_38",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "ographs,\nunderperformed both CNN-based methods. The 91.7% accuracy and particularly poor Normal-class\ndetection (88.8% recall) suggest that interpreting a 224 × 224 radiograph as a sequence of 224 pixel-rows is\npoorly matched to the spatial structure of diagnostic patterns. Thoracic diseases present localized opacities\nor patterns (e.g., infiltrates in pneumonia, diffuse consolidation in COVID-19) that are not inherently\nsequential along pixel rows. The RNN's strength in capturing long-range temporal dependencies offers no\nadvantage when applied to static 2D images. This outcome aligns with the broader finding that RNNs are\nfundamentally unsuited for spatial",
+        "chunk_index": 38
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_39",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " applied to static 2D images. This outcome aligns with the broader finding that RNNs are\nfundamentally unsuited for spatial data without substantial architectural modification[40].\nHybrid architectures—complementary gains: Both hybrid approaches marginally outperformed or\nmatched the CNN baseline:\n● The CNN-Transformer hybrid (97.5% accuracy, 0.9733 macro F1) suggests that Transformer\nself-attention can refine ResNet50 features by modeling global spatial relationships that\nconvolutional receptive fields might miss. However, the improvement is modest (~1% absolute\naccuracy gain), implying that ResNet50 already captures most diagnostically relevant information.\n● The system-level ensemble (97.7% accuracy",
+        "chunk_index": 39
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_40",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " absolute\naccuracy gain), implying that ResNet50 already captures most diagnostically relevant information.\n● The system-level ensemble (97.7% accuracy, 0.9800 macro F1) demonstrated that combining\nResNet50 and DenseNet121 predictions yields consistent gains across all metrics. This\nimprovement arises from architectural diversity: ResNet's skip connections and DenseNet's dense\nconnections learn different feature representations. When both models correctly classify a sample,\nthe ensemble reinforces this decision; when one errs, the other often recovers, resulting in net error\nreduction. The 97.7% accuracy represents approximately a 1.1% absolute improvement over the\nbaseline, suggesting that architectural ensembles are a pragmatic path to",
+        "chunk_index": 40
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_41",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "97.7% accuracy represents approximately a 1.1% absolute improvement over the\nbaseline, suggesting that architectural ensembles are a pragmatic path to higher performance in\nresource-constrained settings[41].\n5.2\nClinical implications and deployment considerations\nFrom a clinical perspective, all four models exceed reasonable performance thresholds for use as a\nscreening or triage tool. A 97.7% accuracy translates to a false positive rate of approximately 2.3%,\nacceptable for preliminary radiological screening in many settings. However, the RNN's weaker\nNormal-class performance (88.8% recall) would result in ~11% of healthy radiographs being flagged as\nabnormal, potentially increasing radiologist workload with false alarms.\n",
+        "chunk_index": 41
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_42",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "8% recall) would result in ~11% of healthy radiographs being flagged as\nabnormal, potentially increasing radiologist workload with false alarms.\nThe superior ensemble and hybrid performance, by contrast, minimizes false negatives (particularly for\nCOVID-19 detection), which is clinically critical: missing a positive case poses greater harm than a false\nalarm[42]. The marginal accuracy improvement from the ensemble (0.3% above the hybrid) may seem\nminor numerically but could translate to ~4 additional correctly classified cases per 1,000 radiographs\nscreened in a real-world deployment.\n5.3\nComputational efficiency trade-offs\nModel inference latency and computational cost should inform deployment decisions. ResNet50 is\nsubstantially",
+        "chunk_index": 42
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_43",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": ".\n5.3\nComputational efficiency trade-offs\nModel inference latency and computational cost should inform deployment decisions. ResNet50 is\nsubstantially lighter than DenseNet121 and hybrid variants, with inference times around 10–15 ms per\nimage on standard GPU hardware. The ensemble requires two forward passes, doubling inference time,\nwhile the CNN-Transformer hybrid incurs additional Transformer overhead (~5–10 ms) despite similar\nparameter counts. In high-throughput settings (e.g., a radiology department processing hundreds of images\ndaily), the CNN baseline may be preferred given its speed and reasonable accuracy. Conversely, in\nlower-volume or research contexts where maximizing accuracy is paramount, the ensemble justifies the\ncomputational cost.\n5.",
+        "chunk_index": 43
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_44",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " reasonable accuracy. Conversely, in\nlower-volume or research contexts where maximizing accuracy is paramount, the ensemble justifies the\ncomputational cost.\n5.4\nLimitations and future work\nSeveral limitations warrant acknowledgment:\n1. Dataset scope: Our evaluation uses 2,768 images across three classes. While sufficient for pilot\nstudies, larger multicenter datasets would strengthen generalization claims. Additionally, our\ndataset comprises primarily frontal chest radiographs; lateral and oblique views, common in\nclinical practice, were not included.\n2. No statistical significance testing: We report raw metrics without confidence intervals or\nhypothesis tests. Given the fixed test set size, the observed 1% difference between models may\nreflect sampling variance rather than true",
+        "chunk_index": 44
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_45",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " or\nhypothesis tests. Given the fixed test set size, the observed 1% difference between models may\nreflect sampling variance rather than true architecture superiority.\n3. Limited hyperparameter exploration: Early stopping patience, learning rates, and regularization\nstrengths were held constant across models. Architecture-specific tuning might yield different\nconclusions.\n4. Absence of radiologist comparison: While our models exceed 96% accuracy, direct comparison\nwith radiologist performance on the same test set would contextualize clinical utility[43].\n5. Reproducibility details: Although we provide hyperparameters, variations in random seeds,\nCUDA versions, and hardware can subtly affect training dynamics. Full code release (e.g., via\nGitHub) would facilitate reproduction",
+        "chunk_index": 45
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_46",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " variations in random seeds,\nCUDA versions, and hardware can subtly affect training dynamics. Full code release (e.g., via\nGitHub) would facilitate reproduction.\nFuture work should:\n● Evaluate ensemble methods with learned weighting rather than simple averaging[44].\n● Investigate explainability techniques (e.g., Grad-CAM, attention visualizations) to build clinician\ntrust[45].\n● Conduct prospective validation on an independent external dataset.\n● Explore domain adaptation techniques to transfer models trained on public datasets to\ninstitution-specific imaging protocols[46].\n6. Conclusion\nThis work presents a systematic empirical comparison of four deep learning architectures for automated\nthoracic disease detection in chest radiographs: a ResNet50 CNN baseline, a BiLSTM RNN approach",
+        "chunk_index": 46
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_47",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " deep learning architectures for automated\nthoracic disease detection in chest radiographs: a ResNet50 CNN baseline, a BiLSTM RNN approach, a\nCNN-Transformer hybrid, and a ResNet50 + DenseNet121 ensemble. Our key findings are:\n1. Pure CNNs remain highly effective: The ResNet50 baseline achieved 96.6% test accuracy with\nrobust per-class performance, validating the continued suitability of convolution-based\narchitectures for medical image classification.\n2. Recurrent models are ill-suited for static radiographs: The pure RNN attained only 91.7%\naccuracy, with particularly weak Normal-class detection, confirming that sequential modeling\nprovides no advantage for spatial image data without fundamental architectural",
+        "chunk_index": 47
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_48",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " 91.7%\naccuracy, with particularly weak Normal-class detection, confirming that sequential modeling\nprovides no advantage for spatial image data without fundamental architectural innovations.\n3. Hybrid approaches confer modest but meaningful gains: The CNN-Transformer hybrid and the\nResNet50 + DenseNet121 ensemble both achieved ~97.5–97.7% accuracy, outperforming the\nbaseline by approximately 1%. These results indicate that architectural complementarity—whether\nthrough attention refinement or ensemble diversity—offers a practical path to improved\nperformance.\n4. Ensemble methods maximize accuracy within practical constraints: The system-level\nensemble achieved the highest macro F1 score (0.98) and best per-class sensitivity, making it a\nrobust choice for clinical",
+        "chunk_index": 48
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_49",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "-level\nensemble achieved the highest macro F1 score (0.98) and best per-class sensitivity, making it a\nrobust choice for clinical deployment when computational resources permit.\nOur systematic evaluation fills a gap in the thoracic disease detection literature by directly comparing\nmultiple paradigms under controlled conditions. The findings support the use of either the\nCNN-Transformer hybrid or ensemble approaches for real-world applications seeking to maximize\ndiagnostic accuracy. More broadly, this work demonstrates the value of empirical comparison across\narchitectural families and provides a template for similar studies in medical imaging.\n7 . References\n[1] World Health Organization. (2023). Global tuberculosis report 2023. WHO.\nhttps://www.who.int/publications/i",
+        "chunk_index": 49
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_50",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "\n[1] World Health Organization. (2023). Global tuberculosis report 2023. WHO.\nhttps://www.who.int/publications/i/item/9789240073524\n[2] Bourgeois, F. T., et al. (2023). Severe pneumonia in children: A global overview. The Lancet Respiratory\nMedicine, 11(4), 350–363. https://doi.org/10.1016/S2213-2600(22)00409-0\n[3] Rubin, G. D. (2021). Advancing imaging for diagnosis and prognosis of disease. In Advances in\nmedicine from the Radiological Society of North America (pp. 15–32",
+        "chunk_index": 50
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_51",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " Advancing imaging for diagnosis and prognosis of disease. In Advances in\nmedicine from the Radiological Society of North America (pp. 15–32). Radiological Society of North\nAmerica.\n[4] Sistrom, C. L., & Bosma, J. W. (2023). Radiologists as gatekeepers: Diagnostic accuracy and referral\npatterns in emergency radiology. Journal of the American College of Radiology, 20(3), 240–248.\nhttps://doi.org/10.1016/j.jacr.2022.09.001\n[5] Hosny, A., Parmar, C., & Quackenbush, J. (2023). Artificial intelligence in oncology:",
+        "chunk_index": 51
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_52",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "] Hosny, A., Parmar, C., & Quackenbush, J. (2023). Artificial intelligence in oncology: current\napplications and future directions. Nature Reviews Clinical Oncology, 20(10), 650–664.\nhttps://doi.org/10.1038/s41571-023-00782-y\n[6] Litjens, G., et al. (2023). A survey on deep learning in medical image analysis. IEEE Transactions on\nMedical Imaging, 42(11), 3151–3171. https://doi.org/10.1109/TMI.2023.3290195\n[7] Shen, D., Wu, G., & Suk,",
+        "chunk_index": 52
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_53",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": ".org/10.1109/TMI.2023.3290195\n[7] Shen, D., Wu, G., & Suk, H.-I. (2023). Deep learning in medical image analysis. Annual Review of\nBiomedical Engineering, 25, 221–246. https://doi.org/10.1146/annurev-bioeng-071114-040734\n[8] LeCun, Y., Bengio, Y., & Hinton, G. E. (2023). Deep learning. Nature, 521(7553), 436–444.\n[9] He, K., Zhang, X., Ren, S., & Sun, J. (2023).",
+        "chunk_index": 53
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_54",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "), 436–444.\n[9] He, K., Zhang, X., Ren, S., & Sun, J. (2023). Deep residual learning for image recognition. IEEE\nTransactions on Pattern Analysis and Machine Intelligence, 45(1), 11–27.\nhttps://doi.org/10.1109/TPAMI.2023.3256897\n[10] Hochreiter, S., & Schmidhuber, J. (1997). Long short-term memory. Neural Computation, 9(8),\n1735–1780. https://doi.org/10.1162/neco.1997.9.8.1735\n[11] Vaswani, A., et",
+        "chunk_index": 54
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_55",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "doi.org/10.1162/neco.1997.9.8.1735\n[11] Vaswani, A., et al. (2023). Attention is all you need. IEEE Transactions on Pattern Analysis and\nMachine Intelligence, 45(2), 2496–2509. https://doi.org/10.1109/TPAMI.2023.3256897\n[12] Dosovitskiy, A., et al. (2023). An image is worth 16×16 words: Transformers for image recognition at\nscale. International Journal of Computer Vision, 131(1), 56–73.\nhttps://doi.org/10.1007/s11263-023",
+        "chunk_index": 55
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_56",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " International Journal of Computer Vision, 131(1), 56–73.\nhttps://doi.org/10.1007/s11263-023-01702-z\n[13] Wang, X., et al. (2023). Towards visual explanations of deep neural networks via latent visual-semantic\nalignment. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (pp. 8914–8923).\n[14] Ronneberger, O., Fischer, P., & Brox, T. (2023). U-Net: Convolutional networks for biomedical image\nsegmentation. IEEE Transactions on Medical Imaging, 42(5), 1494–1505.\nhttps://doi.org/10.1109",
+        "chunk_index": 56
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_57",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "segmentation. IEEE Transactions on Medical Imaging, 42(5), 1494–1505.\nhttps://doi.org/10.1109/TMI.2023.3256897\n[15] Krizhevsky, A., Sutskever, I., & Hinton, G. E. (2023). ImageNet classification with deep convolutional\nneural networks. Communications of the ACM, 60(6), 84–90. https://doi.org/10.1145/3065386\n[16] Rajpurkar, P., et al. (2023). CheXNet: Radiologist-level pneumonia detection on chest X-rays with deep\nconvolutional neural networks. Radiology",
+        "chunk_index": 57
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_58",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " al. (2023). CheXNet: Radiologist-level pneumonia detection on chest X-rays with deep\nconvolutional neural networks. Radiology, 306(1), 25–32. https://doi.org/10.1148/radiol.2023220946\n[17] Tan, M., & Le, Q. V. (2023). EfficientNet: Rethinking model scaling for convolutional neural networks.\nIn International Conference on Machine Learning (pp. 6105–6114). PMLR.\n[18] Chen, G., et al. (2023). ResNeSt: Split-attention networks. In IEEE/CVF Conference on Computer\nVision and Pattern Recognition (pp. ",
+        "chunk_index": 58
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_59",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": ". (2023). ResNeSt: Split-attention networks. In IEEE/CVF Conference on Computer\nVision and Pattern Recognition (pp. 2735–2745).\n[19] Huang, G., Liu, Z., Van Der Maaten, L., & Weinberger, K. Q. (2023). Densely connected convolutional\nnetworks. In IEEE Conference on Computer Vision and Pattern Recognition (pp. 4700–4708).\n[20] Simonyan, K., & Zisserman, A. (2023). Very deep convolutional networks for large-scale image\nrecognition. IEEE Transactions on Pattern Analysis and Machine Intelligence, 45(1), 1–10.\nhttps://doi.org",
+        "chunk_index": 59
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_60",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " large-scale image\nrecognition. IEEE Transactions on Pattern Analysis and Machine Intelligence, 45(1), 1–10.\nhttps://doi.org/10.1109/TPAMI.2023.3256897\n[21] Carion, L., et al. (2023). Self-supervised learning for medical image segmentation via image context\nrestoration. Medical Image Analysis, 77, 102384. https://doi.org/10.1016/j.media.2023.102384\n[22] Dosovitskiy, A., et al. (2023). An image is worth 16×16 words: Transformers for image recognition at\nscale. International Conference on Learning Representations, 3",
+        "chunk_index": 60
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_61",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "2023). An image is worth 16×16 words: Transformers for image recognition at\nscale. International Conference on Learning Representations, 3(8), 1–22.\n[23] Liu, Z., et al. (2023). Swin Transformer: Hierarchical vision transformer using shifted windows. In\nIEEE/CVF International Conference on Computer Vision (pp. 10012–10022).\n[24] Xie, S., Girshick, R., Dollár, P., Tu, Z., & He, K. (2023). Aggregated residual transformations for deep\nneural networks. In IEEE Conference on Computer Vision and Pattern Recognition (pp. 1492–1500).\n[25] Chen",
+        "chunk_index": 61
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_62",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " for deep\nneural networks. In IEEE Conference on Computer Vision and Pattern Recognition (pp. 1492–1500).\n[25] Chen, J., et al. (2023). TransUNet: Transformers make strong encoders for medical image\nsegmentation. arXiv preprint arXiv:2102.04306.\n[26] Valanarasu, J. M. V., et al. (2023). Medical transformer: Gated axial-attention for medical image\nsegmentation. In International Conference on Medical Image Computing and Computer-Assisted\nIntervention (pp. 36–46). Springer, Cham.\n[27] Graves, A., et al. (2023). Speech recognition with",
+        "chunk_index": 62
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_63",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "ervention (pp. 36–46). Springer, Cham.\n[27] Graves, A., et al. (2023). Speech recognition with deep recurrent neural networks. In IEEE\nInternational Conference on Acoustics, Speech and Signal Processing (pp. 6645–6649). IEEE.\n[28] Ba, J. L., Kiros, J. R., & Hinton, G. E. (2023). Layer normalization. arXiv preprint arXiv:1607.06450.\n[29] Schmidhuber, J., & Hochreiter, S. (1997). Long short-term memory. Neural Computation, 9(8),\n1735–1780.\n[30",
+        "chunk_index": 63
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_64",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "iter, S. (1997). Long short-term memory. Neural Computation, 9(8),\n1735–1780.\n[30] Breiman, L. (2023). Random forests. Machine Learning, 45(1), 5–32.\nhttps://doi.org/10.1023/A:1010933404324\n[31] Schapire, R. E., & Freund, Y. (2023). Boosting: Foundations and algorithms. MIT Press.\n[32] Kuncheva, L. I., & Whitaker, C. J. (2023). Measures of diversity in classifier ensembles and their\nrelationship with the ensemble accuracy. Machine Learning, 51(2),",
+        "chunk_index": 64
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_65",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " J. (2023). Measures of diversity in classifier ensembles and their\nrelationship with the ensemble accuracy. Machine Learning, 51(2), 181–207.\nhttps://doi.org/10.1023/A:1022859003006\n[33] Zhou, Z.-H. (2023). Ensemble methods: Foundations and algorithms. CRC Press.\n[34] Wolpert, D. H. (1992). Stacked generalization. Neural Networks, 5(2), 241–259.\nhttps://doi.org/10.1016/S0893-6080(05)80023-1\n[35] Rahman, T., et al. (2023). Exploring the effect of image",
+        "chunk_index": 65
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_66",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "6080(05)80023-1\n[35] Rahman, T., et al. (2023). Exploring the effect of image enhancement techniques on COVID-19\ndetection using chest X-rays. Computers in Biology and Medicine, 132, 104319.\nhttps://doi.org/10.1016/j.compbiomed.2021.104319\n[36] Kermany, D., et al. (2023). Labeled optical coherence tomography (OCT) and chest X-ray images for\nclassification. Mendeley Data, V2. https://data.mendeley.com/datasets/rscbjbr9sj/2\n[37] Szegedy, C., et al.",
+        "chunk_index": 66
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_67",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": " https://data.mendeley.com/datasets/rscbjbr9sj/2\n[37] Szegedy, C., et al. (2023). Inception-v4, Inception-ResNet and the impact of residual connections on\nlearning. In AAAI Conference on Artificial Intelligence (Vol. 31, No. 1).\n[38] Kingma, D. P., & Ba, J. (2023). Adam: A method for stochastic optimization. arXiv preprint\narXiv:1412.6980.\n[39] Ioffe, S., & Szegedy, C. (2023). Batch normalization: Accelerating deep network training by reducing\ninternal covariate shift",
+        "chunk_index": 67
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_68",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "e, S., & Szegedy, C. (2023). Batch normalization: Accelerating deep network training by reducing\ninternal covariate shift. In International Conference on Machine Learning (pp. 448–456). PMLR.\n[40] Goodfellow, I., Bengio, Y., & Courville, A. (2023). Deep learning. MIT Press.\n[41] Kuncheva, L. I. (2023). Combining pattern classifiers: Methods and algorithms. John Wiley & Sons.\n[42] Greenspan, H., van Ginneken, B., & Summers, R. M. (2023). Guest editorial deep learning in medical\nimaging. IEEE Transactions on Medical Imaging,",
+        "chunk_index": 68
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_69",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": ", B., & Summers, R. M. (2023). Guest editorial deep learning in medical\nimaging. IEEE Transactions on Medical Imaging, 35(5), 1153–1159.\nhttps://doi.org/10.1109/TMI.2016.2553401\n[43] Hinton, G., et al. (2023). Deep neural networks for acoustic modeling in speech recognition. In 11th\nAnnual Conference of the International Speech Communication Association (pp. 338–341).\n[44] LeCun, Y., Chopra, S., Hadsell, R., Ranzato, M., & Huang, F. J. (2023). A tutorial on energy-based\n",
+        "chunk_index": 69
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_70",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "., Hadsell, R., Ranzato, M., & Huang, F. J. (2023). A tutorial on energy-based\nlearning. Predicting Structured Data, 1(0), 191–246.\n[45] Simonyan, K., Vedaldi, A., & Zisserman, A. (2023). Deep inside convolutional networks: Visualising\nimage classification models and saliency maps. arXiv preprint arXiv:1311.2901.\n[46] Ben-David, S., et al. (2023). A theory of learning from different domains. Machine Learning, 79(1),\n151–175. https://doi.org/10.100",
+        "chunk_index": 70
+    },
+    {
+        "chunk_id": "Thoracic Disease Detection Research Paper (2) (2).pdf_chunk_71",
+        "source_file": "Thoracic Disease Detection Research Paper (2) (2).pdf",
+        "text": "3). A theory of learning from different domains. Machine Learning, 79(1),\n151–175. https://doi.org/10.1007/s10994-009-5152-6\n",
+        "chunk_index": 71
+    }
+]

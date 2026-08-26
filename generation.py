@@ -37,6 +37,7 @@ Usage
 """
 
 import json
+import os
 import re
 from typing import Any
 
@@ -47,8 +48,28 @@ import requests  # pip install requests  (already lightweight, no extra SDK need
 # Configuration
 # ---------------------------------------------------------------------------
 
-OLLAMA_BASE_URL = "http://localhost:11434"  # default Ollama endpoint
-DEFAULT_MODEL   = "llama3.1"   # change to any model you have pulled
+OLLAMA_BASE_URL = os.getenv("OLLAMA_HOST", "http://localhost:11434")  # configurable via env
+DEFAULT_MODEL   = os.getenv("OLLAMA_MODEL", "llama3.1")   # change to any model you have pulled
+
+# ---------------------------------------------------------------------------
+# LLM Backend Selection
+# ---------------------------------------------------------------------------
+# LLM_BACKEND controls which LLM is used for generation:
+#
+#   'ollama'  (default) — local Ollama server. Requires `ollama serve` running.
+#             Uses OLLAMA_HOST and OLLAMA_MODEL env vars.
+#
+#   'groq'    (deployed) — Groq Cloud API. Free tier: 30 req/min, 14,400 req/day
+#             for llama-3.1-8b-instant. Requires GROQ_API_KEY env var.
+#             Sign up free (no credit card): https://console.groq.com
+#             Model is set via GROQ_MODEL (default: llama-3.1-8b-instant).
+#
+# The rest of generate_answer() is identical for both backends.
+# ---------------------------------------------------------------------------
+LLM_BACKEND  = os.getenv("LLM_BACKEND",  "ollama").lower()
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL   = os.getenv("GROQ_MODEL",   "llama-3.1-8b-instant")
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 # Chunks whose fused RRF score is below this threshold are dropped before
 # they reach the prompt.
@@ -71,14 +92,18 @@ DEFAULT_MODEL   = "llama3.1"   # change to any model you have pulled
 # As real, larger documents are added (more chunks, more diverse content), the
 # rank distribution will spread out meaningfully and these thresholds MUST be
 # re-validated against the updated corpus before relying on them in production.
-MIN_SIMILARITY_THRESHOLD = 0.10
+#
+# DEPLOYMENT NOTE: if switching embedding backends (e.g. to 'hf_bge_small'), the
+# score distribution changes and these values must be recalibrated. Override via
+# MIN_SIMILARITY_THRESHOLD and ABSTAIN_THRESHOLD environment variables.
+MIN_SIMILARITY_THRESHOLD = float(os.getenv("MIN_SIMILARITY_THRESHOLD", "0.10"))
 
 # If ALL chunks are below this threshold we return early without calling the
 # LLM at all -- there's genuinely nothing useful to ground an answer on.
 # INTERIM VALUE -- scaled for RRF score space.
 # A score below 0.07 means the top chunk ranked last in embeddings AND had zero BM25 overlap.
 # SMALL-CORPUS CAVEAT: same re-validation requirement as MIN_SIMILARITY_THRESHOLD above.
-ABSTAIN_THRESHOLD = 0.07
+ABSTAIN_THRESHOLD = float(os.getenv("ABSTAIN_THRESHOLD", "0.07"))
 
 
 # ---------------------------------------------------------------------------
@@ -137,7 +162,7 @@ def _call_ollama(
     system_prompt: str,
     user_prompt:   str,
     model:         str = DEFAULT_MODEL,
-    temperature:   float = 0.0,   # 0.0 = deterministic, reduces hallucination variance
+    temperature:   float = 0.0,
     timeout:       int   = 120,
 ) -> str:
     """
@@ -158,7 +183,7 @@ def _call_ollama(
         "stream": False,
         "options": {
             "temperature": temperature,
-            "num_predict": 1024,   # max tokens in reply
+            "num_predict": 1024,
         },
     }
 
@@ -181,6 +206,92 @@ def _call_ollama(
 
     data = resp.json()
     return data["message"]["content"].strip()
+
+
+def _call_groq(
+    system_prompt: str,
+    user_prompt:   str,
+    model:         str   = GROQ_MODEL,
+    temperature:   float = 0.0,
+    timeout:       int   = 60,
+) -> str:
+    """
+    Sends a chat request to the Groq Cloud API using the OpenAI-compatible
+    /v1/chat/completions endpoint.
+
+    Free tier: 30 req/min, 14,400 req/day for llama-3.1-8b-instant.
+    Suitable for demo deployments with low concurrent traffic.
+
+    Raises:
+        EnvironmentError -- if GROQ_API_KEY is not set.
+        RuntimeError     -- if the API returns a non-200 status.
+    """
+    if not GROQ_API_KEY:
+        raise EnvironmentError(
+            "LLM_BACKEND=groq requires GROQ_API_KEY to be set. "
+            "Get a free key at https://console.groq.com (no credit card required)."
+        )
+
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type":  "application/json",
+    }
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": user_prompt},
+        ],
+        "temperature": temperature,
+        "max_tokens":  1024,
+        "stream":      False,
+    }
+
+    try:
+        resp = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=timeout)
+    except requests.exceptions.ConnectionError as exc:
+        raise ConnectionError(
+            f"Could not reach Groq API at {GROQ_API_URL}."
+        ) from exc
+
+    if resp.status_code != 200:
+        raise RuntimeError(
+            f"Groq API returned HTTP {resp.status_code}: {resp.text[:400]}"
+        )
+
+    data = resp.json()
+    return data["choices"][0]["message"]["content"].strip()
+
+
+def _call_llm(
+    system_prompt: str,
+    user_prompt:   str,
+    model:         str   = DEFAULT_MODEL,
+    temperature:   float = 0.0,
+) -> str:
+    """
+    Dispatches to the correct LLM backend based on the LLM_BACKEND env var.
+    This is the single call site used by generate_answer().
+    """
+    if LLM_BACKEND == "groq":
+        return _call_groq(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            # model arg is ignored for Groq; GROQ_MODEL env var controls it.
+            temperature=temperature,
+        )
+    else:
+        if LLM_BACKEND != "ollama":
+            print(
+                f"[generation] WARNING: Unknown LLM_BACKEND '{LLM_BACKEND}', "
+                "falling back to 'ollama'."
+            )
+        return _call_ollama(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            model=model,
+            temperature=temperature,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -345,7 +456,7 @@ def generate_answer(
     user_prompt = _build_user_prompt(good_chunks, question)
 
     # --- Call LLM ---
-    raw_response = _call_ollama(
+    raw_response = _call_llm(
         system_prompt=SYSTEM_PROMPT,
         user_prompt=user_prompt,
         model=model,
