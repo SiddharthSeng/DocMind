@@ -76,6 +76,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from datetime import datetime, timezone
@@ -85,7 +86,7 @@ from typing import Any
 # ---------------------------------------------------------------------------
 # Local imports (same package)
 # ---------------------------------------------------------------------------
-from generation import _call_ollama, generate_answer
+from generation import _call_llm, generate_answer   # _call_llm dispatches to Groq or Ollama based on LLM_BACKEND
 from vector_store import VectorStore
 
 
@@ -199,8 +200,11 @@ def _compute_retrieval_metrics(results: list[dict]) -> dict[str, Any]:
 
 def _score_faithfulness(answer: str, reference_chunk_text: str) -> int | None:
     """
-    Asks the local LLM to rate the faithfulness of `answer` against
+    Asks the configured LLM to rate the faithfulness of `answer` against
     `reference_chunk_text` on a 1-5 scale.
+
+    Uses _call_llm (the backend dispatcher) so this works with both Ollama
+    (local dev) and Groq (deployed mode) depending on the LLM_BACKEND env var.
 
     Returns the integer score, or None if the model's response could not
     be parsed as an integer (which we treat as a scoring failure).
@@ -213,7 +217,7 @@ def _score_faithfulness(answer: str, reference_chunk_text: str) -> int | None:
         "Faithfulness score (1-5):"
     )
     try:
-        raw = _call_ollama(
+        raw = _call_llm(
             system_prompt=FAITHFULNESS_SYSTEM_PROMPT,
             user_prompt=user_prompt,
             temperature=0.0,
@@ -408,7 +412,7 @@ def run_evaluation(
         "test_set_size": total,
         "pipeline_notes": {
             "retriever": "Hybrid RRF (BAAI/bge-small-en-v1.5 + BM25Okapi, K=10)",
-            "llm":       "Ollama (llama3.1 local)" if not retrieval_only else "N/A (retrieval-only run)",
+            "llm":       f"{os.getenv('LLM_BACKEND', 'ollama').upper()} ({os.getenv('GROQ_MODEL', os.getenv('OLLAMA_MODEL', 'llama3.1'))})" if not retrieval_only else "N/A (retrieval-only run)",
             "top_k":     RETRIEVE_TOP_K,
             "retrieval_only": retrieval_only,
             "small_sample_caveat": (

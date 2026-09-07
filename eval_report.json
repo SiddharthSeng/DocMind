@@ -1,20 +1,20 @@
 {
-  "run_timestamp": "2026-08-26T02:25:47.573792+00:00",
-  "test_set_size": 11,
+  "run_timestamp": "2026-09-07T19:02:13.497152+00:00",
+  "test_set_size": 19,
   "pipeline_notes": {
     "retriever": "Hybrid RRF (BAAI/bge-small-en-v1.5 + BM25Okapi, K=10)",
     "llm": "N/A (retrieval-only run)",
     "top_k": 5,
     "retrieval_only": true,
-    "small_sample_caveat": "All metrics are computed on 11 test cases. This is an appropriate demo/portfolio size but is NOT statistically robust -- a single query change moves each metric by ~9 percentage points. Treat these numbers as directional indicators, not production benchmarks."
+    "small_sample_caveat": "All metrics are computed on 19 test cases. This is an appropriate demo/portfolio size but is NOT statistically robust -- a single query change moves each metric by ~9 percentage points. Treat these numbers as directional indicators, not production benchmarks."
   },
   "retrieval_metrics": {
     "overall": {
-      "precision_at_1": 0.875,
+      "precision_at_1": 0.75,
       "precision_at_3": 1.0,
       "precision_at_5": 1.0,
-      "mrr": 0.9167,
-      "count": 8
+      "mrr": 0.8472,
+      "count": 12
     },
     "by_type": {
       "exact-fact": {
@@ -25,17 +25,17 @@
         "count": 2
       },
       "paraphrased": {
-        "precision_at_1": 0.8333,
+        "precision_at_1": 0.7,
         "precision_at_3": 1.0,
         "precision_at_5": 1.0,
-        "mrr": 0.8889,
-        "count": 6
+        "mrr": 0.8167,
+        "count": 10
       }
     }
   },
   "generation_metrics": {
     "abstention": {
-      "n_unrelated_queries": 3,
+      "n_unrelated_queries": 7,
       "n_correct_abstentions": null,
       "correct_abstention_rate_pct": null,
       "n_false_abstentions": null,
@@ -161,6 +161,86 @@
       "confidence": null,
       "warning": null,
       "faithfulness_score": null
+    },
+    {
+      "id": "boundary_para_1",
+      "type": "paraphrased",
+      "query": "Is there a window during weekends when the platform is offline for maintenance?",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
+      "faithfulness_score": null
+    },
+    {
+      "id": "boundary_para_2",
+      "type": "paraphrased",
+      "query": "What monetary compensation am I owed if the service availability falls short of the guarantee?",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
+      "faithfulness_score": null
+    },
+    {
+      "id": "boundary_para_3",
+      "type": "paraphrased",
+      "query": "Which infrastructure providers handle the hosting and file storage for this platform?",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
+      "faithfulness_score": null
+    },
+    {
+      "id": "boundary_para_4",
+      "type": "paraphrased",
+      "query": "Is the data I upload stored separately from other tenants, and does it ever get used to improve the AI?",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
+      "faithfulness_score": null
+    },
+    {
+      "id": "boundary_ood_1",
+      "type": "unrelated",
+      "query": "What are the rate limits on API calls for the Enterprise tier?",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
+      "faithfulness_score": null
+    },
+    {
+      "id": "boundary_ood_2",
+      "type": "unrelated",
+      "query": "What is the processing fee charged by the payment subprocessor?",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
+      "faithfulness_score": null
+    },
+    {
+      "id": "boundary_ood_3",
+      "type": "unrelated",
+      "query": "Can I submit a support ticket through the dashboard portal?",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
+      "faithfulness_score": null
+    },
+    {
+      "id": "boundary_ood_4",
+      "type": "unrelated",
+      "query": "How do I export my stored vector embeddings to a local FAISS index?",
+      "answer": null,
+      "is_abstention": null,
+      "confidence": null,
+      "warning": null,
+      "faithfulness_score": null
     }
   ],
   "retrieval_detail": [
@@ -274,6 +354,62 @@
         "Design Project - Sem 6.pdf_chunk_15",
         "Design Project - Sem 6.pdf_chunk_21",
         "Design Project - Sem 6.pdf_chunk_22"
+      ]
+    },
+    {
+      "id": "boundary_para_1",
+      "type": "paraphrased",
+      "query": "Is there a window during weekends when the platform is offline for maintenance?",
+      "rank": 1,
+      "expected_chunk_id": "docmind_sla.txt_chunk_0",
+      "retrieved_ids": [
+        "docmind_sla.txt_chunk_0",
+        "docmind_privacy.txt_chunk_1",
+        "Design Project - Sem 6.pdf_chunk_25",
+        "Design Project - Sem 6.pdf_chunk_24",
+        "Design Project - Sem 6.pdf_chunk_18"
+      ]
+    },
+    {
+      "id": "boundary_para_2",
+      "type": "paraphrased",
+      "query": "What monetary compensation am I owed if the service availability falls short of the guarantee?",
+      "rank": 2,
+      "expected_chunk_id": "docmind_sla.txt_chunk_1",
+      "retrieved_ids": [
+        "docmind_sla.txt_chunk_0",
+        "docmind_sla.txt_chunk_1",
+        "docmind_privacy.txt_chunk_1",
+        "Design Project - Sem 6.pdf_chunk_25",
+        "Design Project - Sem 6.pdf_chunk_16"
+      ]
+    },
+    {
+      "id": "boundary_para_3",
+      "type": "paraphrased",
+      "query": "Which infrastructure providers handle the hosting and file storage for this platform?",
+      "rank": 1,
+      "expected_chunk_id": "docmind_privacy.txt_chunk_1",
+      "retrieved_ids": [
+        "docmind_privacy.txt_chunk_1",
+        "Design Project - Sem 6.pdf_chunk_25",
+        "Design Project - Sem 6.pdf_chunk_26",
+        "Design Project - Sem 6.pdf_chunk_18",
+        "Design Project - Sem 6.pdf_chunk_24"
+      ]
+    },
+    {
+      "id": "boundary_para_4",
+      "type": "paraphrased",
+      "query": "Is the data I upload stored separately from other tenants, and does it ever get used to improve the AI?",
+      "rank": 3,
+      "expected_chunk_id": "docmind_privacy.txt_chunk_0",
+      "retrieved_ids": [
+        "docmind_privacy.txt_chunk_1",
+        "Design Project - Sem 6.pdf_chunk_20",
+        "docmind_privacy.txt_chunk_0",
+        "Design Project - Sem 6.pdf_chunk_21",
+        "Design Project - Sem 6.pdf_chunk_17"
       ]
     }
   ]

@@ -10,9 +10,13 @@ A local, privacy-preserving **Retrieval-Augmented Generation (RAG)** system that
 |---|---|---|
 | Text Extraction | `pdfplumber` | Parse raw text from PDF and TXT files |
 | Tokenization | `tiktoken` | Split text into chunks by token count (not characters) |
-| Embedding | `sentence-transformers` (`all-MiniLM-L6-v2`) | Convert text chunks and queries into semantic vectors |
+| Embedding | `sentence-transformers` (`BAAI/bge-small-en-v1.5`) | Convert text chunks and queries into semantic vectors (in-process, no external API) |
 | Vector Store | `ChromaDB` | Store, index, and retrieve embeddings with cosine similarity |
-| Language | Python 3.10+ | Core runtime |
+| Keyword Retrieval | `rank-bm25` (BM25Okapi) | Hybrid retrieval: RRF fusion of embedding + keyword signals |
+| Generation | Groq Cloud API (`llama-3.1-8b-instant`) | Answer generation from retrieved context (deployed); Ollama locally |
+| API | `FastAPI` + `uvicorn` | Backend HTTP API with session management |
+| Frontend | `Streamlit` | Document upload and conversational UI |
+| Language | Python 3.11 | Core runtime |
 
 ---
 
@@ -57,9 +61,9 @@ This embeds all chunks into a local ChromaDB database and runs a sample query.
 This project is being built incrementally:
 
 - [x] **Step 1 — Data Ingestion:** Load PDFs/TXT files, chunk by token count with overlap, export to JSON
-- [x] **Step 2 — Vector Retrieval:** Embed chunks with `sentence-transformers`, store in ChromaDB, retrieve top-k by cosine similarity
-- [ ] **Step 3 — Generation:** Wire retrieved chunks as context into an LLM (e.g., OpenAI GPT or a local model via Ollama) to generate final answers
-- [ ] **Step 4 — UI:** A simple web interface (likely Streamlit or Gradio) to interact with the system conversationally
+- [x] **Step 2 — Vector Retrieval:** Embed chunks with `BAAI/bge-small-en-v1.5` (sentence-transformers), store in ChromaDB, hybrid RRF retrieval (embedding + BM25)
+- [x] **Step 3 — Generation:** Groq Cloud API (`llama-3.1-8b-instant`) for production; Ollama locally. Includes calibrated two-tier abstention gate and post-generation citation verification.
+- [x] **Step 4 — UI:** Streamlit frontend with document upload, session management, and confidence display. FastAPI backend with per-session vector stores.
 
 ---
 

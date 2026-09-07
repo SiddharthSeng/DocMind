@@ -153,42 +153,76 @@ class _BGESmallLocalEmbeddingFunction(EmbeddingFunction):
         return embeddings.tolist()
 
 
-# --- Build the active embedding function based on EMBEDDING_BACKEND ---
-if EMBEDDING_BACKEND == "nomic_api":
-    if not NOMIC_API_KEY:
-        raise EnvironmentError(
-            "EMBEDDING_BACKEND=nomic_api requires NOMIC_API_KEY to be set. "
-            "Sign up for a free key at https://atlas.nomic.ai"
-        )
-    embedding_function = _NomicAPIEmbeddingFunction(api_key=NOMIC_API_KEY)
-    print(f"[VectorStore] Embedding backend: Nomic Atlas API (nomic-embed-text-v1.5)")
+# ---------------------------------------------------------------------------
+# Lazy singleton for the embedding function
+# ---------------------------------------------------------------------------
+# WHY LAZY?
+# Previously, the embedding function was instantiated at module import time.
+# For EMBEDDING_BACKEND=hf_bge_small this triggers sentence-transformers to
+# load BAAI/bge-small-en-v1.5 and PyTorch CPU (~300 MB) before uvicorn has
+# bound its port.  On Render's free tier, if the health check fires before
+# the model finishes loading the process gets killed and restarted in a loop.
+#
+# The lazy singleton pattern below defers the heavy load to the first actual
+# embedding call (i.e. the first /upload or /chat request), giving the server
+# time to start and report healthy first.  Subsequent calls reuse the cached
+# instance — there is no per-request overhead.
+# ---------------------------------------------------------------------------
 
-elif EMBEDDING_BACKEND == "hf_bge_small":
-    # Loads BAAI/bge-small-en-v1.5 in-process via sentence-transformers.
-    # No external API token needed — model is downloaded from HF Hub on first
-    # run and cached in ~/.cache/huggingface/hub/.
-    embedding_function = _BGESmallLocalEmbeddingFunction()
-    print(
-        "[VectorStore] WARNING: Embedding backend is hf_bge_small (BAAI/bge-small-en-v1.5 "
-        "via sentence-transformers). This model has different score geometry than "
-        "nomic-embed-text. Calibrated thresholds are NOT valid for this backend — "
-        "re-run run_calibration.py and evaluate.py before deploying."
-    )
+_embedding_function_instance = None  # module-level cache (populated on first call)
 
-else:
-    # Default: local Ollama
-    if EMBEDDING_BACKEND != "ollama":
+
+def get_embedding_function():
+    """
+    Returns the embedding function singleton for the configured EMBEDDING_BACKEND.
+
+    The instance is created on the FIRST call and cached for all subsequent calls.
+    This defers the heavy sentence-transformers / PyTorch load (hf_bge_small) until
+    the first actual embedding request, not at process startup.
+    """
+    global _embedding_function_instance
+    if _embedding_function_instance is not None:
+        return _embedding_function_instance
+
+    if EMBEDDING_BACKEND == "nomic_api":
+        if not NOMIC_API_KEY:
+            raise EnvironmentError(
+                "EMBEDDING_BACKEND=nomic_api requires NOMIC_API_KEY to be set. "
+                "Sign up for a free key at https://atlas.nomic.ai"
+            )
+        _embedding_function_instance = _NomicAPIEmbeddingFunction(api_key=NOMIC_API_KEY)
+        print("[VectorStore] Embedding backend: Nomic Atlas API (nomic-embed-text-v1.5)")
+
+    elif EMBEDDING_BACKEND == "hf_bge_small":
+        # Loads BAAI/bge-small-en-v1.5 in-process via sentence-transformers.
+        # This is the first point at which PyTorch is imported and the model weights
+        # are loaded — ~300 MB RAM.  Subsequent calls reuse the cached instance.
+        print("[VectorStore] Lazy-loading BAAI/bge-small-en-v1.5 via sentence-transformers...")
+        _embedding_function_instance = _BGESmallLocalEmbeddingFunction()
         print(
-            f"[VectorStore] WARNING: Unknown EMBEDDING_BACKEND '{EMBEDDING_BACKEND}', "
-            "falling back to 'ollama'."
+            "[VectorStore] WARNING: Embedding backend is hf_bge_small (BAAI/bge-small-en-v1.5 "
+            "via sentence-transformers). This model has different score geometry than "
+            "nomic-embed-text. Calibrated thresholds are NOT valid for this backend — "
+            "re-run run_calibration.py and evaluate.py before deploying."
         )
-    embedding_function = embedding_functions.OllamaEmbeddingFunction(
-        url=f"{OLLAMA_HOST}/api/embeddings",
-        model_name="nomic-embed-text",
-    )
-    # Ollama local inference can exceed the default 5-second httpx timeout.
-    embedding_function._session = httpx.Client(timeout=120)
-    print(f"[VectorStore] Embedding backend: Ollama at {OLLAMA_HOST} (nomic-embed-text)")
+
+    else:
+        # Default: local Ollama
+        if EMBEDDING_BACKEND != "ollama":
+            print(
+                f"[VectorStore] WARNING: Unknown EMBEDDING_BACKEND '{EMBEDDING_BACKEND}', "
+                "falling back to 'ollama'."
+            )
+        ef = embedding_functions.OllamaEmbeddingFunction(
+            url=f"{OLLAMA_HOST}/api/embeddings",
+            model_name="nomic-embed-text",
+        )
+        # Ollama local inference can exceed the default 5-second httpx timeout.
+        ef._session = httpx.Client(timeout=120)
+        print(f"[VectorStore] Embedding backend: Ollama at {OLLAMA_HOST} (nomic-embed-text)")
+        _embedding_function_instance = ef
+
+    return _embedding_function_instance
 
 # ---------------------------------------------------------------------------
 # RRF constant — the key tuning parameter for Reciprocal Rank Fusion.
@@ -261,7 +295,7 @@ class VectorStore:
         # Here we tell ChromaDB to use Cosine distance (which is 1 - Cosine Similarity).
         self.collection = self.client.get_or_create_collection(
             name=collection_name,
-            embedding_function=embedding_function,
+            embedding_function=get_embedding_function(),   # lazy singleton — loads model on first call
             metadata={"hnsw:space": "cosine"},
         )
 

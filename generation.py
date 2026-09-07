@@ -62,13 +62,15 @@ DEFAULT_MODEL   = os.getenv("OLLAMA_MODEL", "llama3.1")   # change to any model 
 #   'groq'    (deployed) — Groq Cloud API. Free tier: 30 req/min, 14,400 req/day
 #             for llama-3.1-8b-instant. Requires GROQ_API_KEY env var.
 #             Sign up free (no credit card): https://console.groq.com
-#             Model is set via GROQ_MODEL (default: llama-3.1-8b-instant).
+#             Model is set via GROQ_MODEL (default: allam-2-7b).
+#             Note: llama-3.1-8b-instant was decommissioned by Groq in Sept 2026.
+#             Check https://console.groq.com/docs/models for the current model list.
 #
 # The rest of generate_answer() is identical for both backends.
 # ---------------------------------------------------------------------------
 LLM_BACKEND  = os.getenv("LLM_BACKEND",  "ollama").lower()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL   = os.getenv("GROQ_MODEL",   "llama-3.1-8b-instant")
+GROQ_MODEL   = os.getenv("GROQ_MODEL",   "allam-2-7b")   # updated: llama-3.1-8b-instant decommissioned Sept 2026
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 # Chunks whose fused RRF score is below this threshold are dropped before
@@ -425,24 +427,69 @@ def generate_answer(
     """
     warnings: list[str] = []
 
-    # --- Similarity gate: filter out low-quality chunks ---
-    # We do this BEFORE building the prompt so junk context never reaches the LLM.
-    good_chunks = [
-        c for c in retrieved_chunks
-        if c.get("similarity_score", 0.0) >= MIN_SIMILARITY_THRESHOLD
-    ]
+    # -------------------------------------------------------------------------
+    # Two-tier abstention gate — applied BEFORE building the LLM prompt so no
+    # low-quality context ever reaches the model.
+    #
+    # Design intent (two distinct tiers):
+    #
+    #  Tier 1 — Hard floor (ABSTAIN_THRESHOLD = 0.07):
+    #     Checks the top-ranked chunk's fused RRF score against ABSTAIN_THRESHOLD.
+    #     If even the best chunk scores below this floor, the query has NO meaningful
+    #     connection to the corpus at all (pure noise / completely off-topic). We
+    #     return immediately WITHOUT calling the LLM.
+    #     Typical: true off-topic queries with zero BM25 and poor embedding score.
+    #
+    #  Tier 2 — Context quality filter (MIN_SIMILARITY_THRESHOLD = 0.10):
+    #     After passing Tier 1, each individual chunk is compared against this
+    #     higher threshold. Chunks that score in the gap (ABSTAIN < score < MIN)
+    #     are not strong enough to ground an answer — they're "weak matches".
+    #     If NO chunk clears this bar, we return a distinct "weak match" abstention.
+    #     If at least one chunk clears it, ONLY those chunks are sent to the LLM.
+    #
+    #  Score routing summary:
+    #     top_score < 0.07  → Tier 1 abstain: "No relevant match found"
+    #     top_score in 0.07-0.10, no chunk ≥ 0.10 → Tier 2 abstain: "Weak match, abstaining"
+    #     at least one chunk ≥ 0.10 → LLM called with filtered context
+    # -------------------------------------------------------------------------
 
-    # If everything is below the abstain threshold, don't call the LLM at all.
-    if not good_chunks or max(
-        c.get("similarity_score", 0.0) for c in retrieved_chunks
-    ) < ABSTAIN_THRESHOLD:
+    # Tier 1: hard floor — abort immediately if the best chunk is below ABSTAIN_THRESHOLD.
+    # (Previously this check was short-circuited by 'not good_chunks or ...' which made
+    # ABSTAIN_THRESHOLD completely unreachable. This is now the first, independent check.)
+    top_score = max(
+        (c.get("similarity_score", 0.0) for c in retrieved_chunks),
+        default=0.0,
+    )
+    if top_score < ABSTAIN_THRESHOLD:
         return {
             "answer": "I don't have enough information in the provided documents to answer this question.",
             "sources_cited": [],
             "confidence": 0.0,
             "warning": (
-                "All retrieved chunks had similarity scores below the abstain "
-                f"threshold ({ABSTAIN_THRESHOLD}). The LLM was not called."
+                f"No relevant match found: the top retrieved chunk scored {top_score:.4f}, "
+                f"below the hard floor ({ABSTAIN_THRESHOLD}). The LLM was not called."
+            ),
+        }
+
+    # Tier 2: context quality filter — drop chunks below MIN_SIMILARITY_THRESHOLD.
+    good_chunks = [
+        c for c in retrieved_chunks
+        if c.get("similarity_score", 0.0) >= MIN_SIMILARITY_THRESHOLD
+    ]
+
+    if not good_chunks:
+        # Score is in the gap (ABSTAIN_THRESHOLD ≤ top_score < MIN_SIMILARITY_THRESHOLD).
+        # The query has some surface connection to the corpus, but no chunk is strong
+        # enough to ground a reliable answer. Abstain with a distinct message.
+        return {
+            "answer": "I don't have enough information in the provided documents to answer this question.",
+            "sources_cited": [],
+            "confidence": 0.0,
+            "warning": (
+                f"Weak match abstention: best chunk scored {top_score:.4f} "
+                f"(above hard floor {ABSTAIN_THRESHOLD}, but below context threshold "
+                f"{MIN_SIMILARITY_THRESHOLD}). The LLM was not called to avoid "
+                "hallucination on a low-confidence match."
             ),
         }
 

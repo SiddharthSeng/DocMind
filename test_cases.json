@@ -75,5 +75,72 @@
         "expected_source": "docmind_privacy.txt",
         "expected_chunk_id": "docmind_privacy.txt_chunk_0",
         "type": "paraphrased"
+    },
+
+    {
+        "_comment": "=== ADVERSARIAL BOUNDARY CASES ===",
+        "id": "boundary_para_1",
+        "query": "Is there a window during weekends when the platform is offline for maintenance?",
+        "expected_source": "docmind_sla.txt",
+        "expected_chunk_id": "docmind_sla.txt_chunk_0",
+        "type": "paraphrased",
+        "_intent": "Hard paraphrase: avoids 'scheduled', 'maintenance window', 'Saturday' — uses 'offline' and 'weekends'. BM25 should still fire on 'maintenance'. Risk: over-abstention if embed distance is wide."
+    },
+    {
+        "id": "boundary_para_2",
+        "query": "What monetary compensation am I owed if the service availability falls short of the guarantee?",
+        "expected_source": "docmind_sla.txt",
+        "expected_chunk_id": "docmind_sla.txt_chunk_1",
+        "type": "paraphrased",
+        "_intent": "Hard paraphrase: avoids 'credit', 'uptime', '99.9%' — uses 'monetary compensation', 'service availability', 'guarantee'. Tests whether embeddings bridge the synonym gap."
+    },
+    {
+        "id": "boundary_para_3",
+        "query": "Which infrastructure providers handle the hosting and file storage for this platform?",
+        "expected_source": "docmind_privacy.txt",
+        "expected_chunk_id": "docmind_privacy.txt_chunk_1",
+        "type": "paraphrased",
+        "_intent": "Hard paraphrase: avoids 'AWS', 'subprocessors', 'Together AI' — uses 'infrastructure providers', 'hosting', 'file storage'. BM25 should not fire on 'AWS'; embed must carry the load."
+    },
+    {
+        "id": "boundary_para_4",
+        "query": "Is the data I upload stored separately from other tenants, and does it ever get used to improve the AI?",
+        "expected_source": "docmind_privacy.txt",
+        "expected_chunk_id": "docmind_privacy.txt_chunk_0",
+        "type": "paraphrased",
+        "_intent": "Two-part paraphrase: isolation (chunk_0: 'isolated ChromaDB namespaces') AND training (chunk_0: 'does NOT use customer documents to train'). Tests retrieval of the most relevant chunk across compound query intent."
+    },
+
+    {
+        "id": "boundary_ood_1",
+        "query": "What are the rate limits on API calls for the Enterprise tier?",
+        "expected_source": null,
+        "expected_chunk_id": null,
+        "type": "unrelated",
+        "_intent": "Plausible OOD: shares 'Enterprise' and 'API' with domain vocabulary. BM25 may fire on 'Enterprise' (present in SLA). Gate must block — no rate limits in corpus."
+    },
+    {
+        "id": "boundary_ood_2",
+        "query": "What is the processing fee charged by the payment subprocessor?",
+        "expected_source": null,
+        "expected_chunk_id": null,
+        "type": "unrelated",
+        "_intent": "Plausible OOD: 'subprocessor' and 'processing' appear in privacy chunk_1 (Stripe). BM25 will fire. Gate must still abstain — fees are not documented in the corpus."
+    },
+    {
+        "id": "boundary_ood_3",
+        "query": "Can I submit a support ticket through the dashboard portal?",
+        "expected_source": null,
+        "expected_chunk_id": null,
+        "type": "unrelated",
+        "_intent": "Plausible OOD: 'support ticket' appears in SLA chunk_1. BM25 fires. But the method of submission (dashboard vs email) is not covered — gate must abstain."
+    },
+    {
+        "id": "boundary_ood_4",
+        "query": "How do I export my stored vector embeddings to a local FAISS index?",
+        "expected_source": null,
+        "expected_chunk_id": null,
+        "type": "unrelated",
+        "_intent": "Plausible OOD: 'vector embeddings' appear in privacy chunk_1. 'dashboard' overlaps with unrelated_1. BM25 should fire weakly. Topic (FAISS export) is completely absent — clean abstention expected."
     }
 ]

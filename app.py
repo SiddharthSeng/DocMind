@@ -5,10 +5,13 @@ Provides a clean, intuitive UI for uploading documents and chatting with the RAG
 Communicates with the FastAPI backend (api.py).
 """
 
+import os
 import streamlit as st
 import requests
 
-API_URL = "http://localhost:8000"
+# Backend URL — set API_BASE_URL in the Render environment variables dashboard.
+# Falls back to localhost:8000 for local development.
+API_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 st.set_page_config(page_title="DocMind", page_icon="🧠", layout="wide")
 

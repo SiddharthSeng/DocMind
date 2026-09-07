@@ -63,6 +63,18 @@ async def startup_event():
     cleanup_old_sessions()
 
 
+@app.get("/health")
+async def health_check():
+    """
+    Lightweight health-check endpoint for Render (and any load balancer).
+    Returns immediately WITHOUT loading the embedding model — the model is
+    lazy-loaded on the first /upload or /chat request, so this endpoint can
+    respond within milliseconds of process start and pass health checks
+    before PyTorch has finished initialising.
+    """
+    return {"status": "ok", "service": "DocMind API"}
+
+
 class ChatRequest(BaseModel):
     session_id: str
     query: str

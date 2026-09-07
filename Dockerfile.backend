@@ -43,7 +43,7 @@ ENV EMBEDDING_BACKEND=hf_bge_small
 # LLM: Groq Cloud API (free tier, no credit card required)
 # Set GROQ_API_KEY in Render dashboard — do NOT bake it into this file.
 ENV LLM_BACKEND=groq
-ENV GROQ_MODEL=llama-3.1-8b-instant
+ENV GROQ_MODEL=allam-2-7b
 
 # Retrieval thresholds (calibrated for hf_bge_small on this corpus)
 ENV MIN_SIMILARITY_THRESHOLD=0.10
@@ -52,12 +52,30 @@ ENV ABSTAIN_THRESHOLD=0.07
 # Suppress HF symlink warning (not supported on all container filesystems)
 ENV HF_HUB_DISABLE_SYMLINKS_WARNING=1
 
-# ── RAM note ──────────────────────────────────────────────────────────────────
-# Runtime estimate:  PyTorch CPU + bge-small: ~300 MB
-#                   FastAPI + ChromaDB + Python: ~150 MB
-#                   Total: ~450 MB  (Render free tier limit: 512 MB)
-# If OOM errors occur, consider switching to fastembed (ONNX, same model, ~150 MB total):
-#   pip install fastembed  and update vector_store.py to use EMBEDDING_BACKEND=bge_fastembed
+# Constrain PyTorch to a single CPU thread pool so it doesn't pre-allocate
+# multiple worker stacks.  On Render's 0.1 CPU free tier, extra threads add
+# RAM without any parallelism benefit.
+ENV OMP_NUM_THREADS=1
+
+# Silence HuggingFace tokenizers fork-safety warning (we don't fork workers).
+ENV TOKENIZERS_PARALLELISM=false
+
+# ── RAM profile ───────────────────────────────────────────────────────────────
+# Model load is now LAZY (deferred to first embedding call via get_embedding_function()).
+# The process starts and passes Render's health check BEFORE PyTorch is loaded.
+#
+# Steady-state (after first request):
+#   PyTorch CPU + bge-small:      ~300 MB
+#   FastAPI + ChromaDB + Python:  ~150 MB
+#   Total:                        ~450 MB   (within 512 MB free-tier limit)
+#
+# Peak during image build (corpus baking step above):
+#   Same model + ChromaDB HNSW write simultaneously: ~540-590 MB
+#   NOTE: docker build runs on Render's BUILD server (not the 512 MB dyno),
+#   so the build-time peak does NOT cause an OOM in the deployed container.
+#
+# If runtime OOM errors occur after deployment, switch to fastembed (ONNX):
+#   pip install fastembed  →  set EMBEDDING_BACKEND=bge_fastembed  (~150 MB total)
 
 EXPOSE 8000
 CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -58,5 +58,17 @@
     "mean_faithfulness": null,
     "faithfulness_n_scored": 0,
     "faithfulness_skipped": true
+  },
+  {
+    "timestamp": "2026-09-07T19:02:13.497152+00:00",
+    "test_set_size": 19,
+    "precision_at_1": 0.75,
+    "precision_at_3": 1.0,
+    "precision_at_5": 1.0,
+    "mrr": 0.8472,
+    "correct_abstention_rate": null,
+    "mean_faithfulness": null,
+    "faithfulness_n_scored": 0,
+    "faithfulness_skipped": true
   }
 ]
