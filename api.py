@@ -5,6 +5,7 @@ Exposes the DocMind RAG pipeline to a frontend UI via HTTP endpoints.
 Includes session-scoped vector storage and automatic cleanup of old sessions.
 """
 
+import asyncio
 import os
 import shutil
 import uuid
@@ -145,114 +146,135 @@ async def upload_document(file: UploadFile = File(...)):
     """
     Uploads a document, creates a new session, processes chunks, and embeds them.
     Returns the session_id to be used for subsequent chat requests.
+
+    All CPU/IO-heavy operations (file write, PDF extraction, tokenization,
+    embedding) are offloaded to a thread-pool thread via asyncio.to_thread so
+    the event loop remains free to serve /health and other requests concurrently.
     """
     ext = Path(file.filename).suffix.lower()
-    
+
     if ext not in [".pdf", ".txt"]:
         raise HTTPException(
-            status_code=400, 
+            status_code=400,
             detail=f"Unsupported file format: {ext}. Only PDF and TXT are supported."
         )
-        
+
     # Generate a unique session ID
     session_id = str(uuid.uuid4())
     session_path = SESSIONS_DIR / session_id
     os.makedirs(session_path, exist_ok=True)
-    
+
     # Setup absolute paths for this session
     docs_folder = session_path / "docs"
     os.makedirs(docs_folder, exist_ok=True)
-    
+
     file_path = docs_folder / file.filename
     chunks_json = session_path / "processed_chunks.json"
     chroma_dir = session_path / "chroma_db"
-    
-    # Save the uploaded file to the session's docs folder
-    try:
+
+    # --- Blocking: save uploaded file ---
+    # Read bytes on the async side (UploadFile.read() is awaitable),
+    # then write to disk in a thread to avoid blocking the loop on file I/O.
+    file_bytes = await file.read()
+
+    def _save_file():
         with open(file_path, "wb") as f:
-            shutil.copyfileobj(file.file, f)
+            f.write(file_bytes)
+
+    try:
+        await asyncio.to_thread(_save_file)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
-        
-    try:
-        # 1. Ingestion (Chunking) - explicitly using absolute paths
+
+    # --- Blocking: chunking + embedding + preview (all CPU/disk) ---
+    def _run_pipeline():
+        import json
+
+        # 1. Ingestion (Chunking)
         process_documents(
             input_dir=str(docs_folder),
             output_file=str(chunks_json)
         )
-        
-        # 2. Embedding
+
+        # 2. Embedding (model.encode() + ChromaDB writes)
         store = VectorStore(
             persist_directory=str(chroma_dir),
             chunks_json=str(chunks_json)
         )
         store.load_and_embed_chunks(str(chunks_json))
-        
-        # Get extracted text for preview
-        preview_text = ""
-        import json
+
+        # 3. Build preview from chunks JSON
         with open(chunks_json, "r", encoding="utf-8") as f:
             chunks = json.load(f)
-            # Combine the first few chunks for preview
-            preview_text = "\n\n".join([c["text"] for c in chunks[:5]])
-            if len(chunks) > 5:
-                preview_text += "\n\n... (preview truncated) ..."
-                
-        if not preview_text.strip():
-             raise HTTPException(
-                status_code=422,
-                detail="File processed, but no extractable text found (e.g., scanned PDF image)."
-            )
+        preview_text = "\n\n".join([c["text"] for c in chunks[:5]])
+        if len(chunks) > 5:
+            preview_text += "\n\n... (preview truncated) ..."
+        return chunks, preview_text
 
-        return {
-            "session_id": session_id,
-            "filename": file.filename,
-            "chunks_processed": len(chunks),
-            "preview": preview_text
-        }
-        
+    try:
+        chunks, preview_text = await asyncio.to_thread(_run_pipeline)
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Pipeline processing failed: {str(e)}")
+
+    if not preview_text.strip():
+        raise HTTPException(
+            status_code=422,
+            detail="File processed, but no extractable text found (e.g., scanned PDF image)."
+        )
+
+    return {
+        "session_id": session_id,
+        "filename": file.filename,
+        "chunks_processed": len(chunks),
+        "preview": preview_text
+    }
 
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """
     Retrieves relevant chunks from the session's vector store and generates an answer.
+
+    The entire pipeline (VectorStore init, ChromaDB query + model.encode via
+    retrieve(), and the synchronous requests.post to Groq via generate_answer())
+    is offloaded to a thread-pool thread via asyncio.to_thread.  This is the
+    critical fix that allows /health to continue being served during the full
+    ~5-30s round-trip of a chat request without blocking the event loop.
     """
     session_path = SESSIONS_DIR / request.session_id
-    
+
     if not session_path.exists():
         raise HTTPException(status_code=404, detail="Session not found or expired.")
-        
+
     chroma_dir = session_path / "chroma_db"
     chunks_json = session_path / "processed_chunks.json"
-    
-    try:
-        # Load the session-specific VectorStore
+
+    def _run_chat():
+        # --- Blocking: ChromaDB query + model.encode (via VectorStore.retrieve) ---
         store = VectorStore(
             persist_directory=str(chroma_dir),
             chunks_json=str(chunks_json)
         )
-        
-        # Retrieve chunks
         chunks = store.retrieve(request.query, top_k=5)
-        
-        # Generate answer
+
+        # --- Blocking: synchronous requests.post to Groq API ---
         result = generate_answer(chunks, request.query)
-        
-        # UI Requirement: Filter out the "dropped chunks" warning if it's a correct abstention
+
+        # UI Requirement: suppress "dropped chunks" warning on a correct abstention
         if result.get("warning") and "I don't have enough information" in result["answer"]:
-             if "chunk(s) were dropped" in result["warning"]:
-                 # Just clear the warning to avoid confusing the user on a correct refusal
-                 result["warning"] = None
-                 
+            if "chunk(s) were dropped" in result["warning"]:
+                result["warning"] = None
+
         return result
-        
+
+    try:
+        result = await asyncio.to_thread(_run_chat)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Chat generation failed: {str(e)}")
+
+    return result
 
 
 if __name__ == "__main__":

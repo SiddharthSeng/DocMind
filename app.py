@@ -13,6 +13,36 @@ import requests
 # Falls back to localhost:8000 for local development.
 API_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
+# Render free-tier services spin down after ~15 min of inactivity and can take
+# 50-90 seconds to cold-start.  Use a generous timeout so the user sees a
+# friendly message rather than a raw exception.
+BACKEND_TIMEOUT = 90  # seconds
+
+
+def _safe_error_detail(response: "requests.Response", fallback: str = "Unknown error") -> str:
+    """
+    Try to extract a human-readable detail string from a non-200 response.
+    Falls back gracefully if the body is not valid JSON or is empty.
+    """
+    try:
+        return response.json().get("detail", fallback)
+    except Exception:
+        snippet = response.text[:200].strip() if response.text else ""
+        if snippet:
+            return f"{fallback} — server said: {snippet}"
+        return fallback
+
+
+def _ping_backend() -> None:
+    """
+    Fire-and-forget GET to /health so the Render instance warms up before the
+    user's first real request.  Any error is silently swallowed.
+    """
+    try:
+        requests.get(f"{API_URL}/health", timeout=5)
+    except Exception:
+        pass
+
 st.set_page_config(page_title="DocMind", page_icon="🧠", layout="wide")
 
 # Initialize session state variables
@@ -26,6 +56,15 @@ if "filename" not in st.session_state:
     st.session_state.filename = None
 if "demo_mode" not in st.session_state:
     st.session_state.demo_mode = False
+if "backend_pinged" not in st.session_state:
+    st.session_state.backend_pinged = False
+
+# Pre-warm the Render backend on first page load (non-blocking best-effort ping).
+# This gives the instance time to wake up before the user's first real request.
+if not st.session_state.backend_pinged:
+    import threading
+    threading.Thread(target=_ping_backend, daemon=True).start()
+    st.session_state.backend_pinged = True
 
 st.title("🧠 DocMind")
 st.markdown("Your private, local Document AI. Upload a file — or try the built-in demo.")
@@ -55,7 +94,11 @@ with st.sidebar:
             try:
                 # Prepare file for upload
                 files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
-                response = requests.post(f"{API_URL}/upload", files=files)
+                response = requests.post(
+                    f"{API_URL}/upload",
+                    files=files,
+                    timeout=BACKEND_TIMEOUT,
+                )
 
                 if response.status_code == 200:
                     data = response.json()
@@ -66,11 +109,22 @@ with st.sidebar:
                     st.session_state.messages      = []  # Clear chat for new document
                     st.success(f"Successfully processed {data['chunks_processed']} chunks!")
                 else:
-                    st.error(f"Upload Failed: {response.json().get('detail', 'Unknown Error')}")
+                    detail = _safe_error_detail(response, "Upload failed")
+                    st.error(
+                        f"Upload failed (HTTP {response.status_code}): {detail}"
+                    )
                     st.session_state.session_id = None
 
+            except requests.exceptions.Timeout:
+                st.error(
+                    "⏳ The server is waking up from idle — this can take up to a minute "
+                    "on the free tier. Please wait a moment and try again."
+                )
             except requests.exceptions.ConnectionError:
-                st.error("Backend not reachable. Ensure the FastAPI server is running on port 8000.")
+                st.error(
+                    "🔌 Could not reach the backend. "
+                    "Check that the API service is deployed and the API_BASE_URL is correct."
+                )
             except Exception as e:
                 st.error(f"An unexpected error occurred: {str(e)}")
 
@@ -123,7 +177,11 @@ if st.session_state.session_id:
                         "session_id": st.session_state.session_id,
                         "query": prompt
                     }
-                    response = requests.post(f"{API_URL}/chat", json=payload)
+                    response = requests.post(
+                        f"{API_URL}/chat",
+                        json=payload,
+                        timeout=BACKEND_TIMEOUT,
+                    )
 
                     if response.status_code == 200:
                         data = response.json()
@@ -152,10 +210,21 @@ if st.session_state.session_id:
                         st.error("Session expired or invalid. Please re-upload your document.")
                         st.session_state.session_id = None
                     else:
-                        st.error(f"Generation Failed: {response.json().get('detail', 'Unknown Error')}")
+                        detail = _safe_error_detail(response, "Generation failed")
+                        st.error(
+                            f"Generation failed (HTTP {response.status_code}): {detail}"
+                        )
 
+                except requests.exceptions.Timeout:
+                    st.error(
+                        "⏳ The server is waking up from idle — this can take up to a minute "
+                        "on the free tier. Please wait a moment and try again."
+                    )
                 except requests.exceptions.ConnectionError:
-                    st.error("Backend not reachable. Ensure the FastAPI server is running on port 8000.")
+                    st.error(
+                        "🔌 Could not reach the backend. "
+                        "Check that the API service is deployed and the API_BASE_URL is correct."
+                    )
                 except Exception as e:
                     st.error(f"An unexpected error occurred: {str(e)}")
 
