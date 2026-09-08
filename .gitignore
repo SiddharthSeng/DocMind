@@ -27,3 +27,12 @@ chroma_db/
 docs/*
 # This line un-excludes (keeps) .gitkeep, so the empty folder is visible in git.
 !docs/.gitkeep
+
+# Per-session user data — runtime state, not source code.
+# Contains user-uploaded documents and their ChromaDB indexes.
+# The demo session (sessions/demo/) is also excluded: it is seeded at container
+# startup from the baked ./chroma_db, so tracking it in git is redundant.
+sessions/
+
+# Backup files created during corpus cleanup
+*.bak

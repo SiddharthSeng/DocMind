@@ -43,11 +43,13 @@ ENV EMBEDDING_BACKEND=hf_bge_small
 # LLM: Groq Cloud API (free tier, no credit card required)
 # Set GROQ_API_KEY in Render dashboard — do NOT bake it into this file.
 ENV LLM_BACKEND=groq
-ENV GROQ_MODEL=allam-2-7b
+ENV GROQ_MODEL=openai/gpt-oss-20b
 
-# Retrieval thresholds (calibrated for hf_bge_small on this corpus)
-ENV MIN_SIMILARITY_THRESHOLD=0.10
-ENV ABSTAIN_THRESHOLD=0.07
+# Abstention gate thresholds — COSINE SIMILARITY (embed_score), not fused RRF.
+# The gate is decoupled from ranking: ranking uses fused RRF, gate uses raw cosine sim.
+# Calibrated for bge-small-en-v1.5 on baked 5-chunk corpus (Sept 2026).
+ENV MIN_SIMILARITY_THRESHOLD=0.60
+ENV ABSTAIN_THRESHOLD=0.55
 
 # Suppress HF symlink warning (not supported on all container filesystems)
 ENV HF_HUB_DISABLE_SYMLINKS_WARNING=1

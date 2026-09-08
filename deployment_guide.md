@@ -16,6 +16,13 @@ DocMind uses two separate services on Render:
 
 Both can be deployed on the **free tier** (512 MB RAM, 0.1 CPU each). Deploy the **backend first** so you have its URL before configuring the frontend.
 
+### What users see after deployment
+
+New users land on the Streamlit UI and see two options:
+
+- **🚀 Try the demo** — immediately starts a chat against DocMind's own SLA and Privacy Policy. No upload required. This works because the baked corpus is seeded into `sessions/demo/` at container startup, before any user arrives.
+- **Upload your own document** — creates an isolated session scoped to that document. Sessions are ephemeral (wiped on Render's free-tier restart/spin-down). Data is never shared between sessions.
+
 ---
 
 ## Prerequisites
@@ -58,7 +65,10 @@ In Render's **Settings → Health Check Path**, set:
 /health
 ```
 
-> **Important — Cold-start window:** After deploying, the first health check fires almost immediately. With the lazy-loading fix applied, uvicorn starts and binds the port before PyTorch loads, so the health check passes within the first few seconds. The model loads on the **first actual request** (~5–10s). This is expected and normal.
+> **Important — Cold-start sequence:** After deploying, the startup sequence is:
+> 1. uvicorn binds the port and passes Render's health check (`/health`) — **no PyTorch yet**.
+> 2. `startup_event()` seeds `sessions/demo/` from the baked `./chroma_db` (a fast `shutil.copytree`, no embedding work). This only happens once — subsequent restarts skip the copy if the directory exists.
+> 3. The embedding model (bge-small, ~300 MB PyTorch) is lazy-loaded on the **first actual `/upload` or `/chat` request** (~5–10s). The demo session uses the pre-baked ChromaDB vectors, so it triggers a model load on the first `/chat demo` call.
 
 ### 1.5 Environment Variables
 
@@ -69,14 +79,16 @@ In the Render dashboard for the backend service, go to **Environment** and add:
 | `GROQ_API_KEY` | Your key from console.groq.com | **Required** |
 | `EMBEDDING_BACKEND` | `hf_bge_small` | Set by Dockerfile (override only if changing backend) |
 | `LLM_BACKEND` | `groq` | Set by Dockerfile |
-| `GROQ_MODEL` | `llama-3.1-8b-instant` | Set by Dockerfile |
-| `MIN_SIMILARITY_THRESHOLD` | `0.10` | Set by Dockerfile |
-| `ABSTAIN_THRESHOLD` | `0.07` | Set by Dockerfile |
+| `GROQ_MODEL` | `openai/gpt-oss-20b` | Set by Dockerfile (alternatives: `openai/gpt-oss-120b`) |
+| `MIN_SIMILARITY_THRESHOLD` | `0.60` | Set by Dockerfile (cosine similarity, not fused RRF) |
+| `ABSTAIN_THRESHOLD` | `0.55` | Set by Dockerfile (cosine similarity, not fused RRF) |
 | `HF_HUB_DISABLE_SYMLINKS_WARNING` | `1` | Set by Dockerfile |
 | `OMP_NUM_THREADS` | `1` | Set by Dockerfile |
 | `TOKENIZERS_PARALLELISM` | `false` | Set by Dockerfile |
 
 > **Security:** `GROQ_API_KEY` must be set in the Render dashboard. It must **never** be committed to the repository or baked into the Dockerfile. All other variables have safe defaults in the Dockerfile.
+
+> **Note on thresholds:** The abstention gate uses **cosine similarity** (embed_score) for gating decisions, not fused RRF scores. This was changed in Sept 2026 because RRF scores compress into an indistinguishable band on small corpora. Retrieval *ranking* still uses fused RRF.
 
 ### 1.6 Note the backend URL
 

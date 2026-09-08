@@ -24,15 +24,31 @@ if "preview_text" not in st.session_state:
     st.session_state.preview_text = None
 if "filename" not in st.session_state:
     st.session_state.filename = None
+if "demo_mode" not in st.session_state:
+    st.session_state.demo_mode = False
 
 st.title("🧠 DocMind")
-st.markdown("Your private, local Document AI. Upload a file to start.")
+st.markdown("Your private, local Document AI. Upload a file — or try the built-in demo.")
 
 # --- Sidebar: File Upload & Controls ---
 with st.sidebar:
     st.header("Document Setup")
+
+    # ── Demo shortcut ──────────────────────────────────────────────────────
+    st.markdown("**Quick start**")
+    if st.button("🚀 Try the demo", help="Chat with DocMind's own SLA & Privacy Policy — no upload required."):
+        st.session_state.session_id = "demo"
+        st.session_state.demo_mode  = True
+        st.session_state.filename   = "DocMind SLA & Privacy Policy (demo)"
+        st.session_state.preview_text = None
+        st.session_state.messages   = []
+        st.success("Demo loaded! Ask about DocMind's SLA or Privacy Policy below.")
+
+    st.divider()
+    st.markdown("**Or upload your own document**")
+
     uploaded_file = st.file_uploader("Upload a PDF or TXT file", type=["pdf", "txt", "docx"])
-    
+
     if uploaded_file is not None and uploaded_file.name != st.session_state.filename:
         # A new file was uploaded, trigger ingestion
         with st.spinner("Processing & Embedding Document..."):
@@ -40,18 +56,19 @@ with st.sidebar:
                 # Prepare file for upload
                 files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
                 response = requests.post(f"{API_URL}/upload", files=files)
-                
+
                 if response.status_code == 200:
                     data = response.json()
-                    st.session_state.session_id = data["session_id"]
-                    st.session_state.filename = data["filename"]
-                    st.session_state.preview_text = data["preview"]
-                    st.session_state.messages = []  # Clear chat for new document
+                    st.session_state.session_id   = data["session_id"]
+                    st.session_state.filename      = data["filename"]
+                    st.session_state.preview_text  = data["preview"]
+                    st.session_state.demo_mode     = False
+                    st.session_state.messages      = []  # Clear chat for new document
                     st.success(f"Successfully processed {data['chunks_processed']} chunks!")
                 else:
                     st.error(f"Upload Failed: {response.json().get('detail', 'Unknown Error')}")
                     st.session_state.session_id = None
-                    
+
             except requests.exceptions.ConnectionError:
                 st.error("Backend not reachable. Ensure the FastAPI server is running on port 8000.")
             except Exception as e:
@@ -59,12 +76,21 @@ with st.sidebar:
 
 # --- Main Area: Preview & Chat ---
 if st.session_state.session_id:
-    # Optional Preview Pane
-    with st.expander(f"📄 Previewing: {st.session_state.filename}"):
-        st.text_area("Extracted Text (first few chunks)", st.session_state.preview_text, height=200, disabled=True)
-        
+    # Demo mode banner
+    if st.session_state.demo_mode:
+        st.info(
+            "🚀 **Demo mode** — You're chatting with DocMind's own SLA and Privacy Policy. "
+            "Try asking: *\"What uptime does DocMind guarantee?\"* or "
+            "*\"Who are DocMind's data sub-processors?\"*  "
+            "Upload your own document in the sidebar to start a private session."
+        )
+    else:
+        # Optional Preview Pane (only shown for real uploads)
+        with st.expander(f"📄 Previewing: {st.session_state.filename}"):
+            st.text_area("Extracted Text (first few chunks)", st.session_state.preview_text, height=200, disabled=True)
+
     st.divider()
-    
+
     # Display Chat History
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
@@ -76,14 +102,19 @@ if st.session_state.session_id:
                 st.caption(f"**Confidence:** {msg.get('confidence', 0):.2f}")
                 if msg.get("warning"):
                     st.warning(f"Note: {msg['warning']}")
-                    
-    # Chat Input
-    if prompt := st.chat_input("Ask a question about your document..."):
+
+    # Chat Input — placeholder text adapts to demo vs. real session
+    chat_placeholder = (
+        "Ask about DocMind's SLA or Privacy Policy..."
+        if st.session_state.demo_mode
+        else "Ask a question about your document..."
+    )
+    if prompt := st.chat_input(chat_placeholder):
         # 1. Add user message to UI
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
-            
+
         # 2. Call backend for answer
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
@@ -93,21 +124,21 @@ if st.session_state.session_id:
                         "query": prompt
                     }
                     response = requests.post(f"{API_URL}/chat", json=payload)
-                    
+
                     if response.status_code == 200:
                         data = response.json()
-                        answer = data["answer"]
-                        sources = data["sources_cited"]
+                        answer     = data["answer"]
+                        sources    = data["sources_cited"]
                         confidence = data["confidence"]
-                        warning = data["warning"]
-                        
+                        warning    = data["warning"]
+
                         st.markdown(answer)
                         if sources:
                             st.caption(f"**Sources:** {', '.join(sources)}")
                         st.caption(f"**Confidence:** {confidence:.2f}")
                         if warning:
                             st.warning(f"Note: {warning}")
-                            
+
                         # Save to history
                         st.session_state.messages.append({
                             "role": "assistant",
@@ -116,17 +147,18 @@ if st.session_state.session_id:
                             "confidence": confidence,
                             "warning": warning
                         })
-                        
+
                     elif response.status_code == 404:
                         st.error("Session expired or invalid. Please re-upload your document.")
                         st.session_state.session_id = None
                     else:
                         st.error(f"Generation Failed: {response.json().get('detail', 'Unknown Error')}")
-                        
+
                 except requests.exceptions.ConnectionError:
                     st.error("Backend not reachable. Ensure the FastAPI server is running on port 8000.")
                 except Exception as e:
                     st.error(f"An unexpected error occurred: {str(e)}")
-                    
+
 else:
-    st.info("Upload a document in the sidebar to begin.")
+    st.info("👈 **Upload a document** in the sidebar to begin — or click **Try the demo** to explore DocMind's own SLA and Privacy Policy.")
+

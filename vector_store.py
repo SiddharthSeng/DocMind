@@ -199,12 +199,6 @@ def get_embedding_function():
         # are loaded — ~300 MB RAM.  Subsequent calls reuse the cached instance.
         print("[VectorStore] Lazy-loading BAAI/bge-small-en-v1.5 via sentence-transformers...")
         _embedding_function_instance = _BGESmallLocalEmbeddingFunction()
-        print(
-            "[VectorStore] WARNING: Embedding backend is hf_bge_small (BAAI/bge-small-en-v1.5 "
-            "via sentence-transformers). This model has different score geometry than "
-            "nomic-embed-text. Calibrated thresholds are NOT valid for this backend — "
-            "re-run run_calibration.py and evaluate.py before deploying."
-        )
 
     else:
         # Default: local Ollama

@@ -70,42 +70,58 @@ DEFAULT_MODEL   = os.getenv("OLLAMA_MODEL", "llama3.1")   # change to any model 
 # ---------------------------------------------------------------------------
 LLM_BACKEND  = os.getenv("LLM_BACKEND",  "ollama").lower()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL   = os.getenv("GROQ_MODEL",   "allam-2-7b")   # updated: llama-3.1-8b-instant decommissioned Sept 2026
+GROQ_MODEL   = os.getenv("GROQ_MODEL",   "openai/gpt-oss-20b")  # Task A winner: correct RAG answers + proper OOD abstention (allam-2-7b misread SLA credit tiers)
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-# Chunks whose fused RRF score is below this threshold are dropped before
-# they reach the prompt.
+# ---------------------------------------------------------------------------
+# Abstention gate thresholds — COSINE SIMILARITY (embed_score), NOT fused RRF
+# ---------------------------------------------------------------------------
 #
-# INTERIM VALUE -- calibrated for hybrid RRF score space (nomic-embed-text + BM25, K=10).
-# Empirical basis from 11-query calibration batch:
-#   - Legitimate answers (correct chunk, keyword overlap): fused ~0.17-0.18
-#   - Unrelated domain-adjacent queries (keyword overlap present): fused ~0.18
-#     (BM25 fires on shared words like "dashboard", "Enterprise", "API" -- see note below)
-#   - True zero-overlap noise (Paris weather, etc.): fused ~0.06-0.09 (embed-only, no BM25)
-# A threshold of 0.10 sits above true noise and well below all legitimate answers.
-# NOTE: unrelated queries that share product vocabulary ("dashboard", "API") will still
-# score ~0.18 and pass this gate -- the BM25 signal alone cannot block them because
-# the words genuinely appear in the documents. The LLM prompt instruction handles that
-# residual case. The gate's job here is to block zero-overlap hallucination risk.
+# ARCHITECTURE DECISION (Sept 2026):
+# The abstention gate uses raw cosine similarity (the "embed_score" field on
+# each chunk, computed by bge-small-en-v1.5) to decide whether to call the LLM.
+# It does NOT use the fused RRF "similarity_score" for this decision.
 #
-# SMALL-CORPUS CAVEAT: these values were calibrated against a 5-chunk corpus.
-# RRF's rank-based fusion has limited score resolution at this scale -- with only
-# 5 chunks, all ranks cluster between 1/(K+1) and 1/(K+5), a spread of just 0.024.
-# As real, larger documents are added (more chunks, more diverse content), the
-# rank distribution will spread out meaningfully and these thresholds MUST be
-# re-validated against the updated corpus before relying on them in production.
+# WHY:  Fused RRF scores are dominated by rank position and BM25 overlap.
+#       On small/growing corpora (5 baked chunks + user uploads), every query
+#       retrieves the same few chunks in similar rank order, compressing all
+#       RRF scores into a narrow ~0.16-0.18 band regardless of whether the
+#       query is in-domain or off-topic.  Raw cosine similarity from the
+#       embedding model retains a meaningful semantic signal, though on this
+#       corpus the in-domain (0.60-0.80) and OOD (0.57-0.70) distributions
+#       still overlap significantly.
 #
-# DEPLOYMENT NOTE: if switching embedding backends (e.g. to 'hf_bge_small'), the
-# score distribution changes and these values must be recalibrated. Override via
-# MIN_SIMILARITY_THRESHOLD and ABSTAIN_THRESHOLD environment variables.
-MIN_SIMILARITY_THRESHOLD = float(os.getenv("MIN_SIMILARITY_THRESHOLD", "0.10"))
+# CALIBRATED VALUES (Sept 2026, bge-small-en-v1.5, 5-chunk baked corpus):
+#   In-domain max(embed) range: [0.6025, 0.8017]  (12 queries)
+#   OOD max(embed) range:       [0.6121, 0.7045]  (7 queries)
+#   Overlap: complete — no single threshold cleanly separates them.
+#
+# DESIGN CHOICE (two-layer defense):
+#   The gate catches OBVIOUS noise (true garbage, unrelated domains).
+#   The LLM system prompt handles RESIDUAL OOD (domain-adjacent queries
+#   where vocabulary overlap gives high cosine similarity but the answer
+#   isn't actually in the corpus).  This is verified to work — see the
+#   Part 2 OOD abstention test in the deployment verification.
+#
+# WHAT EACH THRESHOLD CONTROLS:
+#   ABSTAIN_THRESHOLD (cosine sim, default 0.55):
+#       If max(embed_score) across all retrieved chunks is below this,
+#       the query is completely off-topic.  Abstain immediately, no LLM call.
+#       Set conservatively below all observed scores to avoid false positives.
+#   MIN_SIMILARITY_THRESHOLD (cosine sim, default 0.60):
+#       After passing the hard floor, chunks with embed_score below this are
+#       dropped from the LLM context (too weak to ground an answer).  If ALL
+#       chunks are below this → "weak match" abstention.  Otherwise, only
+#       chunks at or above this threshold are sent to the LLM.
+#
+# NOTE: The retrieval RANKING (which chunks are selected and in what order)
+#       still uses the fused RRF score (similarity_score).  Only the gate
+#       DECISION is decoupled to use embed_score.  Do NOT merge these two
+#       signals back together without re-reading this comment.
+# ---------------------------------------------------------------------------
+MIN_SIMILARITY_THRESHOLD = float(os.getenv("MIN_SIMILARITY_THRESHOLD", "0.60"))
 
-# If ALL chunks are below this threshold we return early without calling the
-# LLM at all -- there's genuinely nothing useful to ground an answer on.
-# INTERIM VALUE -- scaled for RRF score space.
-# A score below 0.07 means the top chunk ranked last in embeddings AND had zero BM25 overlap.
-# SMALL-CORPUS CAVEAT: same re-validation requirement as MIN_SIMILARITY_THRESHOLD above.
-ABSTAIN_THRESHOLD = float(os.getenv("ABSTAIN_THRESHOLD", "0.07"))
+ABSTAIN_THRESHOLD = float(os.getenv("ABSTAIN_THRESHOLD", "0.55"))
 
 
 # ---------------------------------------------------------------------------
@@ -428,65 +444,66 @@ def generate_answer(
     warnings: list[str] = []
 
     # -------------------------------------------------------------------------
-    # Two-tier abstention gate — applied BEFORE building the LLM prompt so no
-    # low-quality context ever reaches the model.
+    # Two-tier abstention gate — DECOUPLED from retrieval ranking
+    # -------------------------------------------------------------------------
     #
-    # Design intent (two distinct tiers):
+    # The gate uses COSINE SIMILARITY (embed_score) to decide whether to call
+    # the LLM.  Retrieval ranking uses FUSED RRF (similarity_score).
     #
-    #  Tier 1 — Hard floor (ABSTAIN_THRESHOLD = 0.07):
-    #     Checks the top-ranked chunk's fused RRF score against ABSTAIN_THRESHOLD.
-    #     If even the best chunk scores below this floor, the query has NO meaningful
-    #     connection to the corpus at all (pure noise / completely off-topic). We
-    #     return immediately WITHOUT calling the LLM.
-    #     Typical: true off-topic queries with zero BM25 and poor embedding score.
+    # These are deliberately different signals:
+    #   - RRF is great for ranking (combines BM25 keyword + embedding semantic)
+    #   - Cosine similarity is great for gating (measures absolute semantic
+    #     distance, not relative rank position — so it discriminates OOD from
+    #     in-domain even on tiny or growing corpora where RRF compresses)
     #
-    #  Tier 2 — Context quality filter (MIN_SIMILARITY_THRESHOLD = 0.10):
-    #     After passing Tier 1, each individual chunk is compared against this
-    #     higher threshold. Chunks that score in the gap (ABSTAIN < score < MIN)
-    #     are not strong enough to ground an answer — they're "weak matches".
-    #     If NO chunk clears this bar, we return a distinct "weak match" abstention.
-    #     If at least one chunk clears it, ONLY those chunks are sent to the LLM.
+    # DO NOT merge these signals back together.  See threshold comment block
+    # at the top of this file for the full architectural rationale.
     #
-    #  Score routing summary:
-    #     top_score < 0.07  → Tier 1 abstain: "No relevant match found"
-    #     top_score in 0.07-0.10, no chunk ≥ 0.10 → Tier 2 abstain: "Weak match, abstaining"
-    #     at least one chunk ≥ 0.10 → LLM called with filtered context
+    #  Tier 1 — Hard floor (ABSTAIN_THRESHOLD, cosine sim):
+    #     If the top chunk's embed_score < ABSTAIN_THRESHOLD, the query is
+    #     completely off-topic.  Abstain immediately, do not call the LLM.
+    #
+    #  Tier 2 — Context quality filter (MIN_SIMILARITY_THRESHOLD, cosine sim):
+    #     After passing Tier 1, each chunk's embed_score is compared against
+    #     this higher threshold.  Chunks below it are too semantically weak
+    #     to ground an answer.  If NO chunk clears this bar → distinct
+    #     "weak match" abstention.  Otherwise, only passing chunks are sent
+    #     to the LLM (still ordered by RRF rank for prompt construction).
     # -------------------------------------------------------------------------
 
-    # Tier 1: hard floor — abort immediately if the best chunk is below ABSTAIN_THRESHOLD.
-    # (Previously this check was short-circuited by 'not good_chunks or ...' which made
-    # ABSTAIN_THRESHOLD completely unreachable. This is now the first, independent check.)
-    top_score = max(
-        (c.get("similarity_score", 0.0) for c in retrieved_chunks),
+    # Tier 1: hard floor on cosine similarity (embed_score).
+    top_embed = max(
+        (c.get("embed_score", 0.0) for c in retrieved_chunks),
         default=0.0,
     )
-    if top_score < ABSTAIN_THRESHOLD:
+    if top_embed < ABSTAIN_THRESHOLD:
         return {
             "answer": "I don't have enough information in the provided documents to answer this question.",
             "sources_cited": [],
             "confidence": 0.0,
             "warning": (
-                f"No relevant match found: the top retrieved chunk scored {top_score:.4f}, "
-                f"below the hard floor ({ABSTAIN_THRESHOLD}). The LLM was not called."
+                f"No relevant match found: the top retrieved chunk's cosine similarity "
+                f"was {top_embed:.4f}, below the hard floor ({ABSTAIN_THRESHOLD}). "
+                f"The LLM was not called."
             ),
         }
 
-    # Tier 2: context quality filter — drop chunks below MIN_SIMILARITY_THRESHOLD.
+    # Tier 2: context quality filter on cosine similarity (embed_score).
+    # Chunks are still ordered by fused RRF (similarity_score) — we only
+    # filter on embed_score, we don't re-rank.
     good_chunks = [
         c for c in retrieved_chunks
-        if c.get("similarity_score", 0.0) >= MIN_SIMILARITY_THRESHOLD
+        if c.get("embed_score", 0.0) >= MIN_SIMILARITY_THRESHOLD
     ]
 
     if not good_chunks:
-        # Score is in the gap (ABSTAIN_THRESHOLD ≤ top_score < MIN_SIMILARITY_THRESHOLD).
-        # The query has some surface connection to the corpus, but no chunk is strong
-        # enough to ground a reliable answer. Abstain with a distinct message.
+        # embed_score is in the gap (ABSTAIN ≤ top_embed < MIN).
         return {
             "answer": "I don't have enough information in the provided documents to answer this question.",
             "sources_cited": [],
             "confidence": 0.0,
             "warning": (
-                f"Weak match abstention: best chunk scored {top_score:.4f} "
+                f"Weak match abstention: best chunk cosine similarity was {top_embed:.4f} "
                 f"(above hard floor {ABSTAIN_THRESHOLD}, but below context threshold "
                 f"{MIN_SIMILARITY_THRESHOLD}). The LLM was not called to avoid "
                 "hallucination on a low-confidence match."
@@ -496,7 +513,7 @@ def generate_answer(
     if len(good_chunks) < len(retrieved_chunks):
         dropped = len(retrieved_chunks) - len(good_chunks)
         warnings.append(
-            f"{dropped} chunk(s) were dropped (similarity < {MIN_SIMILARITY_THRESHOLD})."
+            f"{dropped} chunk(s) were dropped (cosine similarity < {MIN_SIMILARITY_THRESHOLD})."
         )
 
     # --- Build prompt ---

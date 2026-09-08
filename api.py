@@ -23,6 +23,20 @@ from generation import generate_answer
 BASE_DIR = Path(__file__).parent.absolute()
 SESSIONS_DIR = BASE_DIR / "sessions"
 
+# ---------------------------------------------------------------------------
+# Demo session
+# ---------------------------------------------------------------------------
+# A well-known session ID seeded from the baked corpus (./chroma_db +
+# processed_chunks.json built into the Docker image at build time).
+# This lets new users explore DocMind's own SLA and privacy policy without
+# having to upload a document first.
+#
+# MUTATION GUARD: /upload always generates a fresh UUID (uuid.uuid4()) and
+# has no parameter that accepts an existing session_id, so there is no code
+# path by which a client can target or overwrite this session.  The check is
+# structural, not just a runtime guard — see upload_document() below.
+DEMO_SESSION_ID = "demo"
+
 app = FastAPI(title="DocMind API")
 
 # Allow CORS for local dev
@@ -39,27 +53,67 @@ MAX_SESSIONS_TO_KEEP = 5
 def cleanup_old_sessions():
     """
     Keeps only the most recent N session folders and deletes the rest.
-    Runs on startup to prevent disk bloat.
+    Runs on startup to prevent disk bloat.  The demo session is excluded
+    from the cleanup count so it is never evicted by normal user activity.
     """
     if not SESSIONS_DIR.exists():
         return
 
-    # List all session directories
-    session_dirs = [d for d in SESSIONS_DIR.iterdir() if d.is_dir()]
-    
+    # List all user session directories (exclude the well-known demo session)
+    session_dirs = [
+        d for d in SESSIONS_DIR.iterdir()
+        if d.is_dir() and d.name != DEMO_SESSION_ID
+    ]
+
     # Sort by modification time, newest first
     session_dirs.sort(key=lambda d: d.stat().st_mtime, reverse=True)
-    
+
     # Delete anything beyond the max allowed
     for old_dir in session_dirs[MAX_SESSIONS_TO_KEEP:]:
         print(f"Cleaning up old session: {old_dir.name}")
         shutil.rmtree(old_dir, ignore_errors=True)
 
 
+def _seed_demo_session() -> None:
+    """
+    Copies the baked corpus into sessions/demo/ on first startup.
+    Skips silently if the demo session already exists — this prevents
+    wasted work on subsequent restarts and avoids resetting a demo
+    conversation that may be in progress.
+
+    Source:  ./chroma_db            (baked at Docker build time)
+             ./processed_chunks.json (baked at Docker build time)
+    Target:  sessions/demo/chroma_db
+             sessions/demo/processed_chunks.json
+    """
+    demo_path   = SESSIONS_DIR / DEMO_SESSION_ID
+    demo_chroma = demo_path / "chroma_db"
+    src_chroma  = BASE_DIR / "chroma_db"
+    src_chunks  = BASE_DIR / "processed_chunks.json"
+
+    if demo_chroma.exists():
+        print(f"[Demo] Demo session already exists at {demo_path} — skipping seed.")
+        return
+
+    if not src_chroma.exists():
+        print(
+            "[Demo] WARNING: baked corpus ./chroma_db not found — "
+            "demo session will not be seeded.  Rebuild the Docker image to bake the corpus."
+        )
+        return
+
+    demo_path.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(src_chroma, demo_chroma)
+    if src_chunks.exists():
+        shutil.copy(src_chunks, demo_path / "processed_chunks.json")
+    print(f"[Demo] Seeded demo session from baked corpus ({src_chroma}).")
+
+
 @app.on_event("startup")
 async def startup_event():
     print("Starting DocMind API...")
     os.makedirs(SESSIONS_DIR, exist_ok=True)
+    _seed_demo_session()
     cleanup_old_sessions()
 
 
