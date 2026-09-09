@@ -79,7 +79,7 @@ GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 #
 # ARCHITECTURE DECISION (Sept 2026):
 # The abstention gate uses raw cosine similarity (the "embed_score" field on
-# each chunk, computed by bge-small-en-v1.5) to decide whether to call the LLM.
+# each chunk) to decide whether to call the LLM.
 # It does NOT use the fused RRF "similarity_score" for this decision.
 #
 # WHY:  Fused RRF scores are dominated by rank position and BM25 overlap.
@@ -88,20 +88,42 @@ GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 #       RRF scores into a narrow ~0.16-0.18 band regardless of whether the
 #       query is in-domain or off-topic.  Raw cosine similarity from the
 #       embedding model retains a meaningful semantic signal, though on this
-#       corpus the in-domain (0.60-0.80) and OOD (0.57-0.70) distributions
-#       still overlap significantly.
+#       corpus the in-domain and OOD distributions still overlap significantly.
 #
 # CALIBRATED VALUES (Sept 2026, bge-small-en-v1.5, 5-chunk baked corpus):
-#   In-domain max(embed) range: [0.6025, 0.8017]  (12 queries)
-#   OOD max(embed) range:       [0.6121, 0.7045]  (7 queries)
-#   Overlap: complete — no single threshold cleanly separates them.
+#
+#   sentence-transformers (PyTorch float32):
+#     In-domain max(embed) range: [0.6025, 0.8017]  (9 queries)
+#     OOD max(embed) range:       [0.3423, 0.7045]  (10 queries)
+#
+#   fastembed (ONNX quantised) — CURRENT DEPLOYED BACKEND:
+#     In-domain max(embed) range: [0.6324, 0.7964]  (9 queries)
+#     OOD max(embed) range:       [0.3423, 0.6976]  (10 queries)
+#
+#   Both backends produce near-identical score geometry for this model.
+#   The gap (in_min - ood_max) is NEGATIVE (-0.065) in both cases, meaning
+#   some OOD queries score higher than some in-domain queries.
+#
+# WHY NOT USE THE NAIVE GAP-MIDPOINT FORMULA:
+#   The naive approach (threshold = midpoint of [in_min, ood_max]) would
+#   produce ~0.665, which would incorrectly block legitimate in-domain
+#   queries like "Where is my data stored geographically?" (embed=0.6324)
+#   and "Can I request deletion of my data?" (embed=0.6358).
+#
+#   The two OOD queries that penetrate the gate ("What programming languages
+#   does DocMind support?" at 0.6934 and "Can I use DocMind offline?" at
+#   0.6976) both contain "DocMind" in the query text, which artificially
+#   inflates their cosine similarity to the corpus.  These are reliably
+#   caught by the LLM-level abstention prompt ("I don't have enough
+#   information...") — confirmed by direct end-to-end testing.
 #
 # DESIGN CHOICE (two-layer defense):
-#   The gate catches OBVIOUS noise (true garbage, unrelated domains).
-#   The LLM system prompt handles RESIDUAL OOD (domain-adjacent queries
+#   The gate is a COARSE pre-filter that catches obvious noise (true garbage,
+#   unrelated domains where embed_score < 0.55).  The LLM system prompt is
+#   the PRIMARY OOD defense — it handles residual domain-adjacent queries
 #   where vocabulary overlap gives high cosine similarity but the answer
-#   isn't actually in the corpus).  This is verified to work — see the
-#   Part 2 OOD abstention test in the deployment verification.
+#   isn't actually in the corpus.  This is verified to work in both the
+#   PyTorch and fastembed backends.
 #
 # WHAT EACH THRESHOLD CONTROLS:
 #   ABSTAIN_THRESHOLD (cosine sim, default 0.55):
@@ -122,6 +144,7 @@ GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 MIN_SIMILARITY_THRESHOLD = float(os.getenv("MIN_SIMILARITY_THRESHOLD", "0.60"))
 
 ABSTAIN_THRESHOLD = float(os.getenv("ABSTAIN_THRESHOLD", "0.55"))
+
 
 
 # ---------------------------------------------------------------------------

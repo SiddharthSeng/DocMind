@@ -10,14 +10,20 @@ python-multipart>=0.0.9
 streamlit>=1.30.0
 python-dotenv>=1.0.0
 
-# ── Embedding backend ────────────────────────────────────────────────────────
-# sentence-transformers: used when EMBEDDING_BACKEND=hf_bge_small (deployed).
-# Pulls in torch (CPU) and huggingface-hub. ~300 MB runtime RAM.
-# Not needed if you run EMBEDDING_BACKEND=ollama locally with Ollama installed.
-sentence-transformers>=3.0.0
+# ── Embedding backend (deployed) ─────────────────────────────────────────────
+# fastembed: ONNX runtime for BAAI/bge-small-en-v1.5.  ~150 MB total RAM.
+# This is the recommended backend for Render's 512 MB free tier
+# (EMBEDDING_BACKEND=bge_fastembed).
+fastembed>=0.3.0
+
+# ── Embedding backend (local dev, DEPRECATED for deployment) ─────────────────
+# sentence-transformers: PyTorch-based, ~300 MB runtime RAM.
+# Causes OOM on Render's 512 MB free tier.  Retained for local dev only
+# (EMBEDDING_BACKEND=hf_bge_small).  Uncomment if needed locally:
+# sentence-transformers>=3.0.0
 
 # ── Local-only (Ollama client) ───────────────────────────────────────────────
 # The ollama package is only needed if you run EMBEDDING_BACKEND=ollama locally.
-# In the deployed Docker image EMBEDDING_BACKEND=hf_bge_small so this is unused
+# In the deployed Docker image EMBEDDING_BACKEND=bge_fastembed so this is unused
 # but kept here so `pip install -r requirements.txt` still works locally.
 ollama>=0.3.0

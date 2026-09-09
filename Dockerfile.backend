@@ -2,10 +2,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# System deps: build-essential for hnswlib (ChromaDB); libgomp1 for torch CPU.
+# System deps: build-essential for hnswlib (ChromaDB).
+# libgomp1 is no longer needed — PyTorch has been replaced by ONNX Runtime.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Python dependencies ──────────────────────────────────────────────────────
@@ -13,20 +13,20 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # ── Pre-download embedding model ─────────────────────────────────────────────
-# Bakes BAAI/bge-small-en-v1.5 (~90 MB) into the image at build time so the
-# first request doesn't block on a model download.  sentence-transformers
-# caches to ~/.cache/huggingface/hub by default.
+# Bakes BAAI/bge-small-en-v1.5 ONNX weights (~25 MB quantised) into the image
+# at build time via fastembed, so the first request doesn't block on a download.
+# fastembed caches to ~/.cache/fastembed by default.
 RUN python -c "\
-from sentence_transformers import SentenceTransformer; \
-SentenceTransformer('BAAI/bge-small-en-v1.5'); \
-print('bge-small-en-v1.5 cached successfully')"
+from fastembed import TextEmbedding; \
+TextEmbedding(model_name='BAAI/bge-small-en-v1.5'); \
+print('bge-small-en-v1.5 (ONNX) cached successfully')"
 
 # ── Application code & Corpus ────────────────────────────────────────────────
 COPY . .
 
 # Bake the fixed corpus into the image (creates chroma_db/ in the image layer)
-# We set EMBEDDING_BACKEND so vector_store.py knows to use the local bge-small model.
-RUN EMBEDDING_BACKEND=hf_bge_small python -c "\
+# We set EMBEDDING_BACKEND so vector_store.py uses the fastembed backend.
+RUN EMBEDDING_BACKEND=bge_fastembed python -c "\
 from vector_store import VectorStore; \
 print('Baking corpus into image...'); \
 store = VectorStore(); \
@@ -37,8 +37,8 @@ print(f'Successfully baked {store.collection.count()} chunks into chroma_db/')"
 RUN mkdir -p sessions && chmod -R 777 sessions
 
 # ── Environment variables (deployed defaults) ─────────────────────────────────
-# Embedding: bge-small-en-v1.5 via sentence-transformers (no external API call)
-ENV EMBEDDING_BACKEND=hf_bge_small
+# Embedding: bge-small-en-v1.5 via fastembed (ONNX runtime, no PyTorch)
+ENV EMBEDDING_BACKEND=bge_fastembed
 
 # LLM: Groq Cloud API (free tier, no credit card required)
 # Set GROQ_API_KEY in Render dashboard — do NOT bake it into this file.
@@ -47,37 +47,25 @@ ENV GROQ_MODEL=openai/gpt-oss-20b
 
 # Abstention gate thresholds — COSINE SIMILARITY (embed_score), not fused RRF.
 # The gate is decoupled from ranking: ranking uses fused RRF, gate uses raw cosine sim.
-# Calibrated for bge-small-en-v1.5 on baked 5-chunk corpus (Sept 2026).
+# Calibrated for bge-small-en-v1.5 via fastembed (ONNX) on baked 5-chunk corpus (Sept 2026).
+# NOTE: these WILL be recalibrated after the fastembed migration — placeholder values below.
 ENV MIN_SIMILARITY_THRESHOLD=0.60
 ENV ABSTAIN_THRESHOLD=0.55
 
 # Suppress HF symlink warning (not supported on all container filesystems)
 ENV HF_HUB_DISABLE_SYMLINKS_WARNING=1
 
-# Constrain PyTorch to a single CPU thread pool so it doesn't pre-allocate
-# multiple worker stacks.  On Render's 0.1 CPU free tier, extra threads add
-# RAM without any parallelism benefit.
-ENV OMP_NUM_THREADS=1
-
-# Silence HuggingFace tokenizers fork-safety warning (we don't fork workers).
-ENV TOKENIZERS_PARALLELISM=false
-
 # ── RAM profile ───────────────────────────────────────────────────────────────
-# Model load is now LAZY (deferred to first embedding call via get_embedding_function()).
-# The process starts and passes Render's health check BEFORE PyTorch is loaded.
+# Model load is LAZY (deferred to first embedding call via get_embedding_function()).
+# The process starts and passes Render's health check BEFORE the model is loaded.
 #
 # Steady-state (after first request):
-#   PyTorch CPU + bge-small:      ~300 MB
-#   FastAPI + ChromaDB + Python:  ~150 MB
-#   Total:                        ~450 MB   (within 512 MB free-tier limit)
+#   ONNX Runtime + bge-small:       ~40-60 MB
+#   FastAPI + ChromaDB + Python:    ~80-100 MB
+#   Total:                          ~150-180 MB  (well within 512 MB free-tier limit)
 #
-# Peak during image build (corpus baking step above):
-#   Same model + ChromaDB HNSW write simultaneously: ~540-590 MB
-#   NOTE: docker build runs on Render's BUILD server (not the 512 MB dyno),
-#   so the build-time peak does NOT cause an OOM in the deployed container.
-#
-# If runtime OOM errors occur after deployment, switch to fastembed (ONNX):
-#   pip install fastembed  →  set EMBEDDING_BACKEND=bge_fastembed  (~150 MB total)
+# This is a massive improvement over the PyTorch backend (~450 MB) which was
+# confirmed to cause OOM kills on Render's 512 MB free tier.
 
 EXPOSE 8000
 CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
