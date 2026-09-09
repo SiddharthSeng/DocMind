@@ -86,7 +86,7 @@ with st.sidebar:
     st.divider()
     st.markdown("**Or upload your own document**")
 
-    uploaded_file = st.file_uploader("Upload a PDF or TXT file", type=["pdf", "txt", "docx"])
+    uploaded_file = st.file_uploader("Upload a PDF, TXT, or DOCX file", type=["pdf", "txt", "docx"])
 
     if uploaded_file is not None and uploaded_file.name != st.session_state.filename:
         # A new file was uploaded, trigger ingestion

@@ -6,6 +6,12 @@ import tiktoken
 from pathlib import Path
 from typing import List, Dict, Any
 
+try:
+    import docx  # python-docx
+    _DOCX_AVAILABLE = True
+except ImportError:
+    _DOCX_AVAILABLE = False
+
 def extract_text_from_txt(file_path: str) -> str:
     """Reads raw text from a .txt file."""
     with open(file_path, "r", encoding="utf-8") as f:
@@ -24,6 +30,29 @@ def extract_text_from_pdf(file_path: str) -> str:
     except Exception as e:
         print(f"Error reading PDF {file_path}: {e}")
     return text
+
+
+def extract_text_from_docx(file_path: str) -> str:
+    """Extracts text from a .docx file using python-docx.
+
+    Joins paragraph text with newlines, skipping empty paragraphs.
+    Tables are not extracted (body text only) — extend if needed.
+
+    Raises:
+        ImportError  -- if python-docx is not installed.
+        RuntimeError -- if the file is corrupted or not a valid DOCX.
+    """
+    if not _DOCX_AVAILABLE:
+        raise ImportError(
+            "python-docx is required to process DOCX files. "
+            "Install it with: pip install python-docx"
+        )
+    try:
+        document = docx.Document(file_path)
+        paragraphs = [p.text for p in document.paragraphs if p.text.strip()]
+        return "\n".join(paragraphs)
+    except Exception as e:
+        raise RuntimeError(f"Failed to read DOCX file '{file_path}': {e}") from e
 
 def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> List[str]:
     """
@@ -88,8 +117,19 @@ def process_documents(input_dir: str, output_file: str, chunk_size: int = 500, o
         elif ext == '.pdf':
             print(f"Processing PDF: {file_name}")
             text = extract_text_from_pdf(str(file_path))
+        elif ext == '.docx':
+            print(f"Processing DOCX: {file_name}")
+            try:
+                text = extract_text_from_docx(str(file_path))
+            except ImportError as e:
+                print(f"Error reading DOCX {file_name}: {e}")
+                text = ""
+            # RuntimeError (corrupt/invalid file) is intentionally NOT caught here
+            # — it propagates up to api.py's pipeline handler, which converts it
+            # to a clean HTTP 500 with a meaningful message.
         else:
-            # Skip unsupported formats (like .docx, images, etc. for now)
+            # Skip truly unsupported formats (images, spreadsheets, etc.)
+            print(f"Skipping unsupported format: {file_name}")
             continue
             
         # Ignore empty documents

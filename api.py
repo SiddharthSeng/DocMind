@@ -12,9 +12,14 @@ import uuid
 from pathlib import Path
 from typing import Optional
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+# Load .env for local development (no-op in Docker/Render where env vars are
+# injected directly into the process environment by the platform).
+load_dotenv()
 
 from data_ingestion import process_documents
 from vector_store import VectorStore
@@ -153,10 +158,10 @@ async def upload_document(file: UploadFile = File(...)):
     """
     ext = Path(file.filename).suffix.lower()
 
-    if ext not in [".pdf", ".txt"]:
+    if ext not in [".pdf", ".txt", ".docx"]:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported file format: {ext}. Only PDF and TXT are supported."
+            detail=f"Unsupported file format: {ext}. Only PDF, TXT, and DOCX are supported."
         )
 
     # Generate a unique session ID
