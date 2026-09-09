@@ -58,7 +58,7 @@ Select **Free** (512 MB RAM, 0.1 CPU). Click **Create Web Service**.
 
 ### 1.4 Health Check Path
 
-Render performs HTTP health checks on your service. DocMind's FastAPI backend exposes a dedicated `/health` endpoint that returns `{"status": "ok"}` immediately — without loading the embedding model. This is important: on Render's free tier the health check fires within seconds of deploy, before PyTorch's ~300 MB model load completes. The lazy-loading design ensures the process binds its port and passes health checks first.
+Render performs HTTP health checks on your service. DocMind's FastAPI backend exposes a dedicated `/health` endpoint that returns `{"status": "ok"}` immediately — without loading the embedding model. The embedding model (fastembed/ONNX, ~40–60 MB) is lazy-loaded on the first `/upload` or `/chat` request, not at startup. This ensures the process binds its port and passes health checks instantly.
 
 In Render's **Settings → Health Check Path**, set:
 ```
@@ -66,9 +66,9 @@ In Render's **Settings → Health Check Path**, set:
 ```
 
 > **Important — Cold-start sequence:** After deploying, the startup sequence is:
-> 1. uvicorn binds the port and passes Render's health check (`/health`) — **no PyTorch yet**.
+> 1. uvicorn binds the port and passes Render's health check (`/health`) — **no embedding model loaded yet**.
 > 2. `startup_event()` seeds `sessions/demo/` from the baked `./chroma_db` (a fast `shutil.copytree`, no embedding work). This only happens once — subsequent restarts skip the copy if the directory exists.
-> 3. The embedding model (bge-small, ~300 MB PyTorch) is lazy-loaded on the **first actual `/upload` or `/chat` request** (~5–10s). The demo session uses the pre-baked ChromaDB vectors, so it triggers a model load on the first `/chat demo` call.
+> 3. The embedding model (bge-small-en-v1.5 via fastembed/ONNX, ~40–60 MB) is lazy-loaded on the **first actual `/upload` or `/chat` request** (~2–5s). The demo session uses the pre-baked ChromaDB vectors, so it triggers a model load on the first `/chat demo` call.
 
 ### 1.5 Environment Variables
 
@@ -77,18 +77,16 @@ In the Render dashboard for the backend service, go to **Environment** and add:
 | Variable | Value | Required? |
 |---|---|---|
 | `GROQ_API_KEY` | Your key from console.groq.com | **Required** |
-| `EMBEDDING_BACKEND` | `hf_bge_small` | Set by Dockerfile (override only if changing backend) |
+| `EMBEDDING_BACKEND` | `bge_fastembed` | Set by Dockerfile (override only if changing backend) |
 | `LLM_BACKEND` | `groq` | Set by Dockerfile |
-| `GROQ_MODEL` | `openai/gpt-oss-20b` | Set by Dockerfile (alternatives: `openai/gpt-oss-120b`) |
-| `MIN_SIMILARITY_THRESHOLD` | `0.60` | Set by Dockerfile (cosine similarity, not fused RRF) |
-| `ABSTAIN_THRESHOLD` | `0.55` | Set by Dockerfile (cosine similarity, not fused RRF) |
+| `GROQ_MODEL` | `openai/gpt-oss-20b` | Set by Dockerfile |
+| `MIN_SIMILARITY_THRESHOLD` | `0.60` | Set by Dockerfile (cosine similarity gate, not fused RRF) |
+| `ABSTAIN_THRESHOLD` | `0.55` | Set by Dockerfile (cosine similarity gate, not fused RRF) |
 | `HF_HUB_DISABLE_SYMLINKS_WARNING` | `1` | Set by Dockerfile |
-| `OMP_NUM_THREADS` | `1` | Set by Dockerfile |
-| `TOKENIZERS_PARALLELISM` | `false` | Set by Dockerfile |
 
 > **Security:** `GROQ_API_KEY` must be set in the Render dashboard. It must **never** be committed to the repository or baked into the Dockerfile. All other variables have safe defaults in the Dockerfile.
 
-> **Note on thresholds:** The abstention gate uses **cosine similarity** (embed_score) for gating decisions, not fused RRF scores. This was changed in Sept 2026 because RRF scores compress into an indistinguishable band on small corpora. Retrieval *ranking* still uses fused RRF.
+> **Note on thresholds:** The abstention gate uses **cosine similarity** (`embed_score`) for gating decisions, not fused RRF scores. This was changed in Sept 2026 because RRF scores compress into an indistinguishable band on small corpora. Retrieval *ranking* still uses fused RRF. See README.md for the full design rationale.
 
 ### 1.6 Note the backend URL
 
@@ -128,9 +126,10 @@ Streamlit's default route is `/`. Set:
 
 ## Step 3 — Verify the Deployment
 
-1. Open the backend URL directly: `https://your-backend.onrender.com/` — should return `{"title":"DocMind API"}` or similar JSON.
+1. Open the backend URL directly: `https://your-backend.onrender.com/health` — should return `{"status": "ok", "service": "DocMind API"}`.
 2. Open the frontend URL — should show the DocMind UI with a file upload sidebar.
-3. Upload a `.pdf` or `.txt` file and ask a question — the first request will be slow (~10–15s) because the embedding model loads on first use. Subsequent requests in the same session are fast.
+3. Click **"🚀 Try the demo"** and ask a question to verify the baked corpus works end-to-end.
+4. Upload a `.pdf`, `.txt`, or `.docx` file and ask a question — the first request will be slow (~5–10s) because the fastembed/ONNX model loads on first use. Subsequent requests in the same session are fast.
 
 ---
 
@@ -159,11 +158,13 @@ To avoid spin-down, upgrade to Render's **Starter plan** (~$7/month) which keeps
 
 ### Rate Limits (Groq Free Tier)
 
-Groq's free tier for `llama-3.1-8b-instant`:
+Groq's free tier for `openai/gpt-oss-20b`:
 - 30 requests/minute
 - 14,400 requests/day
 
 For a personal or portfolio demo these limits are not a concern. If you exceed them, Groq returns HTTP 429 and the backend will surface an error to the frontend.
+
+> **Note on model selection:** `openai/gpt-oss-20b` was selected after evaluating several Groq-hosted models. `llama-3.1-8b-instant` was decommissioned by Groq in September 2026. `allam-2-7b` was disqualified during evaluation for factual errors on exact-value queries against the SLA corpus. Check [console.groq.com/docs/models](https://console.groq.com/docs/models) for the current list if you need to change this.
 
 ---
 
