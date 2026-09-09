@@ -156,9 +156,3 @@ The frontend connects to the backend via the `API_BASE_URL` environment variable
 
 DocMind is intentionally built from scratch using the raw libraries. The goal is to understand exactly what happens at every step — chunking strategy, embedding model choice, hybrid retrieval fusion, abstention thresholds — rather than hiding it behind a framework abstraction. This makes it easier to debug, tune, and explain in interviews.
 
----
-
-## License
-
-MIT
-
