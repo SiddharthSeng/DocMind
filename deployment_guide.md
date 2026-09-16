@@ -166,6 +166,10 @@ For a personal or portfolio demo these limits are not a concern. If you exceed t
 
 > **Note on model selection:** `openai/gpt-oss-20b` was selected after evaluating several Groq-hosted models. `llama-3.1-8b-instant` was decommissioned by Groq in September 2026. `allam-2-7b` was disqualified during evaluation for factual errors on exact-value queries against the SLA corpus. Check [console.groq.com/docs/models](https://console.groq.com/docs/models) for the current list if you need to change this.
 
+### Memory Usage
+
+The backend's peak RAM usage under normal load has been measured at ~277 MB locally, with a steady-state of ~150–180 MB — well within Render's 512 MB free-tier ceiling. Render's free tier runs on shared physical infrastructure, so available memory can vary with neighboring tenants; if the hosted instance is ever unresponsive, this is the most likely cause. Render's Starter plan (paid) provides dedicated memory if guaranteed uptime is needed.
+
 ---
 
 ## Environment Variable Checklist (Pre-Launch)

@@ -84,7 +84,11 @@ Example questions to try:
 - *"Who are DocMind's data sub-processors?"*
 - *"What service credit do I get if uptime drops below 95%?"*
 
+> **A note on the hosted demo:** The live instance runs on Render's free tier (512 MB RAM, shared infrastructure). The pipeline has been tested locally at ~277 MB peak, well within the limit — but free-tier environments share physical hosts and can occasionally exhibit higher latency or fail a request under load conditions outside the app's control. If the hosted demo is slow or returns an error, **Option B (local setup) is the recommended way to evaluate the project** — it runs reliably and is straightforward to get running in under five minutes with the steps below. The retrieval and generation pipeline itself is not the source of any instability; this is purely a free-tier hosting constraint.
+
 ### Option B — Local development
+
+> **Prerequisites:** Python 3.11+. Dependencies install via `pip install -r requirements.txt` (~2–3 minutes first time, mainly downloading the fastembed ONNX model weights ~40 MB).
 
 ```bash
 # 1. Install dependencies
@@ -104,7 +108,7 @@ python -m streamlit run app.py
 
 Upload any **PDF, TXT, or DOCX** file via the sidebar to start a private session. Each upload creates an isolated session — your data is never mixed with other users' documents.
 
-> **Note:** The backend loads environment variables from `.env` via `python-dotenv`. Ensure `.env` contains `LLM_BACKEND=groq` (and a valid `GROQ_API_KEY`) or `LLM_BACKEND=ollama` (with Ollama running locally). If `LLM_BACKEND` is not set, it defaults to `ollama`.
+> **Note:** The backend loads environment variables from `.env` via `python-dotenv`. Ensure `.env` contains `LLM_BACKEND=groq` (and a valid `GROQ_API_KEY`) or `LLM_BACKEND=ollama` (with Ollama running locally). If `LLM_BACKEND` is not set, it defaults to `ollama`. If you are not running Ollama locally, also set `EMBEDDING_BACKEND=bge_fastembed` — otherwise the embedding backend defaults to `ollama` and the backend will fail to start. The `.env.example` file lists all configurable variables.
 
 ### Option C — Run the pipeline directly (scripting / evaluation)
 
