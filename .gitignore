@@ -36,3 +36,13 @@ sessions/
 
 # Backup files created during corpus cleanup
 *.bak
+
+# Evaluation gold set and run outputs — they quote the private documents in docs/,
+# so they are kept out of version control for the same reason docs/ is.
+eval/gold/
+eval/results/
+# Downloaded public test documents (large binaries; re-download via their source URLs)
+eval/corpus/
+
+# Fine-tuned model exports from training/*.ipynb (large binaries; reproduce by re-running the notebook)
+models/

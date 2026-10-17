@@ -152,6 +152,9 @@ class _BGEFastEmbedFunction(EmbeddingFunction):
     """
 
     MODEL_NAME = "BAAI/bge-small-en-v1.5"
+    # bge-*-v1.5 was trained with this instruction on the QUERY side only;
+    # passages are embedded without it.  fastembed's query_embed() does not add it.
+    QUERY_INSTRUCTION = "Represent this sentence for searching relevant passages: "
 
     def __init__(self):
         try:
@@ -176,6 +179,23 @@ class _BGEFastEmbedFunction(EmbeddingFunction):
         norms = np.where(norms == 0, 1, norms)  # avoid division by zero
         arr = arr / norms
         return arr.tolist()
+
+    def embed_query(self, input: Documents) -> Embeddings:
+        """Embeds search queries with bge's query instruction prepended."""
+        return self([self.QUERY_INSTRUCTION + q for q in input])
+
+    def count_tokens(self) -> "Callable[[str], int]":
+        """
+        Returns a token counter using the model's own WordPiece tokenizer, so
+        chunks can be sized against its 512-token window.  Works on a copy:
+        the model's tokenizer must keep its truncation setting.
+        """
+        from tokenizers import Tokenizer
+
+        tok = Tokenizer.from_str(self._model.model.tokenizer.to_str())
+        tok.no_truncation()
+        tok.no_padding()
+        return lambda text: len(tok.encode(text, add_special_tokens=False).ids)
 
 
 
@@ -250,6 +270,16 @@ def get_embedding_function():
 
     return _embedding_function_instance
 
+
+def embedding_token_counter():
+    """
+    Token counter matching the active embedding model, for sizing chunks
+    (data_ingestion.ingest_documents).  Returns None when the backend has no
+    local tokenizer (Ollama / Nomic API), and the caller falls back to an estimate.
+    """
+    ef = get_embedding_function()
+    return ef.count_tokens() if hasattr(ef, "count_tokens") else None
+
 # ---------------------------------------------------------------------------
 # RRF constant — the key tuning parameter for Reciprocal Rank Fusion.
 # ---------------------------------------------------------------------------
@@ -288,6 +318,8 @@ class VectorStore:
         persist_directory: str = "./chroma_db",
         collection_name: str = "rag_documents",
         chunks_json: str = "processed_chunks.json",
+        query_instruction: bool = False,
+        rrf_k: int = RRF_K,
     ):
         """
         Initialises the ChromaDB client, builds an in-memory BM25 index from
@@ -298,7 +330,12 @@ class VectorStore:
             collection_name:   Name of the ChromaDB collection.
             chunks_json:       Path to the JSON produced by data_ingestion.py.
                                Used to build the BM25 index at startup.
+            query_instruction: Embed queries with the model's query instruction
+                               (bge only; ignored by backends without embed_query).
+            rrf_k:             Reciprocal Rank Fusion constant (see RRF_K).
         """
+        self.query_instruction = query_instruction
+        self.rrf_k = rrf_k
         # ---- ChromaDB (embedding retriever) --------------------------------
         # Create a persistent client that saves our vector database to disk.
         self.client = chromadb.PersistentClient(path=persist_directory)
@@ -380,11 +417,16 @@ class VectorStore:
         for chunk in chunks:
             ids.append(chunk["chunk_id"])
             documents.append(chunk["text"])
-            # Store everything else as metadata so we can filter/retrieve it later
-            metadatas.append({
+            # Store everything else as metadata so we can filter/retrieve it later.
+            # page/section only exist on structure-aware chunks; Chroma rejects None values.
+            meta = {
                 "source_file": chunk["source_file"],
                 "chunk_index": chunk["chunk_index"],
-            })
+            }
+            for key in ("page", "section"):
+                if chunk.get(key) is not None:
+                    meta[key] = chunk[key]
+            metadatas.append(meta)
 
         # Add everything to the collection.
         # We batch in sizes of 5000 to avoid hitting SQLite payload limits on large datasets.
@@ -431,10 +473,17 @@ class VectorStore:
 
         # ---- 1. Embedding ranking (ChromaDB) --------------------------------
         # Retrieve ALL chunks so we have a complete ranking for RRF, not just top_k.
-        embed_results = self.collection.query(
-            query_texts=[query],
-            n_results=n_corpus,
-        )
+        ef = get_embedding_function()
+        if self.query_instruction and hasattr(ef, "embed_query"):
+            embed_results = self.collection.query(
+                query_embeddings=ef.embed_query([query]),
+                n_results=n_corpus,
+            )
+        else:
+            embed_results = self.collection.query(
+                query_texts=[query],
+                n_results=n_corpus,
+            )
 
         if not embed_results["documents"] or not embed_results["documents"][0]:
             return []
@@ -455,6 +504,8 @@ class VectorStore:
                 "text": doc,
                 "source_file": meta["source_file"],
                 "chunk_index": meta["chunk_index"],
+                "page": meta.get("page"),
+                "section": meta.get("section"),
                 "cosine_similarity": 1.0 - dist,
             }
 
@@ -475,7 +526,7 @@ class VectorStore:
             scored.sort(key=lambda x: x[1], reverse=True)
 
             for bm25_rank, (chunk_id, _) in enumerate(scored, start=1):
-                bm25_rrf_map[chunk_id] = 1.0 / (RRF_K + bm25_rank)
+                bm25_rrf_map[chunk_id] = 1.0 / (self.rrf_k + bm25_rank)
             # Chunks absent from `scored` stay at 0 -- no BM25 contribution.
 
         # ---- 3. RRF fusion --------------------------------------------------
@@ -483,7 +534,7 @@ class VectorStore:
         fused_chunks = []
 
         for chunk_id in all_chunk_ids:
-            embed_rrf   = 1.0 / (RRF_K + embed_lookup[chunk_id]["rank"])
+            embed_rrf   = 1.0 / (self.rrf_k + embed_lookup[chunk_id]["rank"])
             bm25_rrf    = bm25_rrf_map.get(chunk_id, 0.0)
             fused_score = embed_rrf + bm25_rrf
 
@@ -492,6 +543,8 @@ class VectorStore:
                 "text":             embed_lookup[chunk_id]["text"],
                 "source_file":      embed_lookup[chunk_id]["source_file"],
                 "chunk_index":      embed_lookup[chunk_id]["chunk_index"],
+                "page":             embed_lookup[chunk_id]["page"],
+                "section":          embed_lookup[chunk_id]["section"],
                 # similarity_score is the fused RRF value -- this is what generation.py
                 # filters on. The structural gate still operates; the signal has improved.
                 "similarity_score": round(fused_score, 6),
