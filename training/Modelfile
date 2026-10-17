@@ -1,0 +1,23 @@
+# Ollama model definition for DocMind's fine-tuned answer model.
+#
+# 1. Run training/02_answer_model_finetune.ipynb on Colab.
+# 2. Download docmind-qwen2.5-7b.Q4_K_M.gguf from Google Drive (MyDrive/docmind/) into ../models/
+# 3. From the repo root:   ollama create docmind-qwen -f training/Modelfile
+# 4. In .env:               OLLAMA_MODEL=docmind-qwen
+#
+# The path below is relative to this file.
+FROM ../models/docmind-qwen2.5-7b.Q4_K_M.gguf
+
+# Qwen2.5 ChatML format — the same template the notebook trained with
+# (tokenizer.apply_chat_template), so prompts at serving time match training.
+TEMPLATE """{{- range .Messages }}<|im_start|>{{ .Role }}
+{{ .Content }}<|im_end|>
+{{ end }}<|im_start|>assistant
+"""
+
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "<|endoftext|>"
+# Deterministic answers; generation.py also sends temperature=0.
+PARAMETER temperature 0
+# DocMind sends ~5 chunks of <=310 tokens plus the prompt; 8K leaves headroom.
+PARAMETER num_ctx 8192

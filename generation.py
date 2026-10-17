@@ -269,7 +269,8 @@ def _build_user_prompt(chunks: list[dict], question: str) -> str:
         for i, chunk in enumerate(chunks, start=1):
             source = chunk.get("source_file", "unknown")
             text   = chunk.get("text", "").strip()
-            lines.append(f"[CHUNK {i} | source: {source}]\n{text}")
+            page   = f" | page {chunk['page']}" if chunk.get("page") else ""
+            lines.append(f"[CHUNK {i} | source: {source}{page}]\n{text}")
         context_block = "\n\n---\n\n".join(lines)
 
     return (
@@ -312,6 +313,11 @@ def _call_ollama(
             "num_predict": 1024,
         },
     }
+    # Ollama's default context window (4096 tokens) silently truncates long
+    # prompts.  Read at call time so callers can raise it per process.
+    num_ctx = os.getenv("OLLAMA_NUM_CTX")
+    if num_ctx:
+        payload["options"]["num_ctx"] = int(num_ctx)
 
     try:
         resp = requests.post(
@@ -530,6 +536,7 @@ def generate_answer(
     question:         str,
     model:            str   = DEFAULT_MODEL,
     temperature:      float = 0.0,
+    use_gate:         bool  = True,
 ) -> dict[str, Any]:
     """
     Full generation step for DocMind's RAG pipeline.
@@ -541,6 +548,11 @@ def generate_answer(
         model:            Ollama model tag (e.g. "llama3.1:8b-instruct").
         temperature:      Sampling temperature. 0.0 = deterministic (recommended
                           for RAG to minimise hallucination variance).
+        use_gate:         Apply the cosine-similarity abstention gate below.
+                          On the gold set the gate (calibrated on the 5-chunk
+                          demo corpus) refused 14 answerable questions whose
+                          evidence was retrieved at rank 1, so callers that
+                          rely on the LLM's own abstention can switch it off.
 
     Returns:
         dict with keys:
@@ -574,7 +586,7 @@ def generate_answer(
 
     broad_query = _is_broad_query(question)
 
-    if broad_query:
+    if broad_query or not use_gate:
         # ── Broad query: bypass gate, send all chunks to LLM ──
         good_chunks = retrieved_chunks
         if not good_chunks:
