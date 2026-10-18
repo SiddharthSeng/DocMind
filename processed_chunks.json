@@ -1,32 +1,29 @@
 [
-  {
-    "chunk_id": "docmind_privacy.txt_chunk_0",
-    "source_file": "docmind_privacy.txt",
-    "text": "DocMind Privacy Policy\nLast Updated: August 1, 2026\n\n1. Data Collection\nWhen you use DocMind's RAG and embedding services, we collect:\n- Document uploads (PDFs, TXT, DOCX) processed through our pipelines\n- API usage telemetry (latency, request counts)\n- Account information (name, email, billing details)\n\n2. Data Usage and LLM Training\nDocMind strictly separates customer data. Your uploaded documents and vector embeddings are stored in isolated ChromaDB namespaces. \nIMPORTANT: DocMind does NOT use customer documents or user-submitted queries to train our foundational models (like DocMind-Mini or DocMind-Pro). Your data remains yours.\n\n3. Data Retention\nBy default",
-    "chunk_index": 0
-  },
-  {
-    "chunk_id": "docmind_privacy.txt_chunk_1",
-    "source_file": "docmind_privacy.txt",
-    "text": " queries to train our foundational models (like DocMind-Mini or DocMind-Pro). Your data remains yours.\n\n3. Data Retention\nBy default, documents are retained for the active life of your account. If you delete a document from your dashboard, the raw file and its corresponding vector embeddings are hard-deleted within 72 hours.\nIf an account is cancelled, all associated data is wiped after 30 days.\n\n4. Third-Party Subprocessors\nWe use the following subprocessors:\n- AWS (Hosting & Storage)\n- Stripe (Payment Processing)\n- Together AI (Optional Fallback LLM API)\n",
-    "chunk_index": 1
-  },
-  {
-    "chunk_id": "docmind_privacy.txt_chunk_2",
-    "source_file": "docmind_privacy.txt",
-    "text": "LM API)\n",
-    "chunk_index": 2
-  },
-  {
-    "chunk_id": "docmind_sla.txt_chunk_0",
-    "source_file": "docmind_sla.txt",
-    "text": "DocMind Service Level Agreement (SLA)\nEffective Date: March 15, 2026\n\n1. Service Commitment\nDocMind commits to providing a 99.9% uptime for our Enterprise and Pro tier customers. Uptime is measured monthly, excluding scheduled maintenance.\n\n2. Scheduled Maintenance\nScheduled maintenance will occur during low-traffic windows (typically Saturday 2:00 AM - 4:00 AM UTC). Customers will be notified at least 48 hours in advance via the status page.\n\n3. Service Credits\nIf DocMind fails to meet the 99.9% uptime commitment in a billing month, eligible customers may request a Service Credit:\n- 99.0% to 99.89%: 10%",
-    "chunk_index": 0
-  },
-  {
-    "chunk_id": "docmind_sla.txt_chunk_1",
-    "source_file": "docmind_sla.txt",
-    "text": " commitment in a billing month, eligible customers may request a Service Credit:\n- 99.0% to 99.89%: 10% credit of the monthly fee\n- 95.0% to 98.99%: 25% credit of the monthly fee\n- Below 95.0%: 50% credit of the monthly fee\n\nTo claim a credit, customers must submit a support ticket within 30 days of the incident. Credits cannot be exchanged for cash and will be applied to future invoices.\n",
-    "chunk_index": 1
-  }
+    {
+        "chunk_id": "docmind_privacy.txt_chunk_0",
+        "source_file": "docmind_privacy.txt",
+        "chunk_index": 0,
+        "text": "DocMind Privacy Policy\nLast Updated: August 1, 2026\n1. Data Collection\nWhen you use DocMind's RAG and embedding services, we collect:\n- Document uploads (PDFs, TXT, DOCX) processed through our pipelines\n- API usage telemetry (latency, request counts)\n- Account information (name, email, billing details)\n2. Data Usage and LLM Training\nDocMind strictly separates customer data. Your uploaded documents and vector embeddings are stored in isolated ChromaDB namespaces.\nIMPORTANT: DocMind does NOT use customer documents or user-submitted queries to train our foundational models (like DocMind-Mini or DocMind-Pro). Your data remains yours.",
+        "page": null,
+        "pages": [],
+        "section": null
+    },
+    {
+        "chunk_id": "docmind_privacy.txt_chunk_1",
+        "source_file": "docmind_privacy.txt",
+        "chunk_index": 1,
+        "text": "3. Data Retention\nBy default, documents are retained for the active life of your account. If you delete a document from your dashboard, the raw file and its corresponding vector embeddings are hard-deleted within 72 hours.\nIf an account is cancelled, all associated data is wiped after 30 days.\n4. Third-Party Subprocessors\nWe use the following subprocessors:\n- AWS (Hosting & Storage)\n- Stripe (Payment Processing)\n- Together AI (Optional Fallback LLM API)",
+        "page": null,
+        "pages": [],
+        "section": "3. Data Retention"
+    },
+    {
+        "chunk_id": "docmind_sla.txt_chunk_0",
+        "source_file": "docmind_sla.txt",
+        "chunk_index": 0,
+        "text": "DocMind Service Level Agreement (SLA)\nEffective Date: March 15, 2026\n1. Service Commitment\nDocMind commits to providing a 99.9% uptime for our Enterprise and Pro tier customers. Uptime is measured monthly, excluding scheduled maintenance.\n2. Scheduled Maintenance\nScheduled maintenance will occur during low-traffic windows (typically Saturday 2:00 AM - 4:00 AM UTC). Customers will be notified at least 48 hours in advance via the status page.\n3. Service Credits\nIf DocMind fails to meet the 99.9% uptime commitment in a billing month, eligible customers may request a Service Credit:\n- 99.0% to 99.89%: 10% credit of the monthly fee\n- 95.0% to 98.99%: 25% credit of the monthly fee\n- Below 95.0%: 50% credit of the monthly fee\nTo claim a credit, customers must submit a support ticket within 30 days of the incident. Credits cannot be exchanged for cash and will be applied to future invoices.",
+        "page": null,
+        "pages": [],
+        "section": null
+    }
 ]

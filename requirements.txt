@@ -1,5 +1,8 @@
 # ── Shared (local + deployed) ───────────────────────────────────────────────
 pdfplumber==0.11.0
+# PDFium text extraction (data_ingestion.extract_pages): keeps reading order and word
+# spacing on multi-column PDFs, where pdfplumber glues words together.
+pypdfium2>=4.30
 python-docx>=1.1.0
 tiktoken>=0.6.0
 chromadb>=0.5.6
@@ -16,6 +19,9 @@ python-dotenv>=1.0.0
 # This is the recommended backend for Render's 512 MB free tier
 # (EMBEDDING_BACKEND=bge_fastembed).
 fastembed>=0.3.0
+# Reranker (reranker.py) runs the exported ONNX cross-encoder; both also come in with fastembed.
+onnxruntime>=1.17
+tokenizers>=0.15
 
 # ── Embedding backend (local dev, DEPRECATED for deployment) ─────────────────
 # sentence-transformers: PyTorch-based, ~300 MB runtime RAM.

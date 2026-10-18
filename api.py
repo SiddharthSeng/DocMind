@@ -21,9 +21,7 @@ from pydantic import BaseModel
 # injected directly into the process environment by the platform).
 load_dotenv()
 
-from data_ingestion import process_documents
-from vector_store import VectorStore
-from generation import generate_answer
+import rag_pipeline
 
 # Define absolute paths for storage to avoid working-directory issues
 BASE_DIR = Path(__file__).parent.absolute()
@@ -193,24 +191,9 @@ async def upload_document(file: UploadFile = File(...)):
 
     # --- Blocking: chunking + embedding + preview (all CPU/disk) ---
     def _run_pipeline():
-        import json
+        # Chunking + embedding (model.encode() + ChromaDB writes)
+        _, chunks = rag_pipeline.index_documents(docs_folder, chunks_json, chroma_dir)
 
-        # 1. Ingestion (Chunking)
-        process_documents(
-            input_dir=str(docs_folder),
-            output_file=str(chunks_json)
-        )
-
-        # 2. Embedding (model.encode() + ChromaDB writes)
-        store = VectorStore(
-            persist_directory=str(chroma_dir),
-            chunks_json=str(chunks_json)
-        )
-        store.load_and_embed_chunks(str(chunks_json))
-
-        # 3. Build preview from chunks JSON
-        with open(chunks_json, "r", encoding="utf-8") as f:
-            chunks = json.load(f)
         preview_text = "\n\n".join([c["text"] for c in chunks[:5]])
         if len(chunks) > 5:
             preview_text += "\n\n... (preview truncated) ..."
@@ -242,11 +225,11 @@ async def chat(request: ChatRequest):
     """
     Retrieves relevant chunks from the session's vector store and generates an answer.
 
-    The entire pipeline (VectorStore init, ChromaDB query + model.encode via
-    retrieve(), and the synchronous requests.post to Groq via generate_answer())
-    is offloaded to a thread-pool thread via asyncio.to_thread.  This is the
-    critical fix that allows /health to continue being served during the full
-    ~5-30s round-trip of a chat request without blocking the event loop.
+    The entire pipeline (VectorStore init, hybrid retrieval + reranking, and the
+    synchronous LLM request) is offloaded to a thread-pool thread via
+    asyncio.to_thread.  This is the critical fix that allows /health to continue
+    being served during the full ~5-30s round-trip of a chat request without
+    blocking the event loop.
     """
     session_path = SESSIONS_DIR / request.session_id
 
@@ -257,22 +240,9 @@ async def chat(request: ChatRequest):
     chunks_json = session_path / "processed_chunks.json"
 
     def _run_chat():
-        # --- Blocking: ChromaDB query + model.encode (via VectorStore.retrieve) ---
-        store = VectorStore(
-            persist_directory=str(chroma_dir),
-            chunks_json=str(chunks_json)
-        )
-        chunks = store.retrieve(request.query, top_k=5)
-
-        # --- Blocking: synchronous requests.post to Groq API ---
-        result = generate_answer(chunks, request.query)
-
-        # UI Requirement: suppress "dropped chunks" warning on a correct abstention
-        if result.get("warning") and "I don't have enough information" in result["answer"]:
-            if "chunk(s) were dropped" in result["warning"]:
-                result["warning"] = None
-
-        return result
+        store = rag_pipeline.open_store(chroma_dir, chunks_json)
+        chunks = rag_pipeline.retrieve(store, request.query)
+        return rag_pipeline.answer(request.query, chunks)
 
     try:
         result = await asyncio.to_thread(_run_chat)

@@ -92,38 +92,51 @@ class StructuredPipeline:
         os.environ["OLLAMA_NUM_CTX"] = str(num_ctx)
 
     def build_index(self, doc_path: Path, workdir: Path):
-        from data_ingestion import ingest_documents
-        from vector_store import VectorStore, embedding_token_counter
+        import rag_pipeline
 
         docs_dir = workdir / "docs"
         docs_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy(doc_path, docs_dir / doc_path.name)
-        chunks_json = workdir / "processed_chunks.json"
-
-        ingest_documents(str(docs_dir), str(chunks_json), count_tokens=embedding_token_counter(),
-                         max_tokens=self.max_tokens, overlap_tokens=self.overlap_tokens)
-        store = VectorStore(
-            persist_directory=str(workdir / "chroma_db"),
-            chunks_json=str(chunks_json),
-            query_instruction=self.query_instruction,
-            rrf_k=self.rrf_k,
+        store, _ = rag_pipeline.index_documents(
+            docs_dir, workdir / "processed_chunks.json", workdir / "chroma_db",
+            max_tokens=self.max_tokens, overlap_tokens=self.overlap_tokens,
+            query_instruction=self.query_instruction, rrf_k=self.rrf_k,
         )
-        store.load_and_embed_chunks(str(chunks_json))
         return store
 
     def retrieve(self, index, question: str) -> list[dict]:
-        if self.reranker is None:
-            return index.retrieve(question, top_k=self.top_k)
-        candidates = index.retrieve(question, top_k=max(self.candidates, self.top_k))
-        return self.reranker.rerank(question, candidates, top_k=self.top_k)
+        import rag_pipeline
+
+        return rag_pipeline.retrieve(index, question, top_k=self.top_k,
+                                     reranker=self.reranker, candidates=self.candidates)
 
     def answer(self, index, question: str, chunks: list[dict]) -> dict:
+        import rag_pipeline
         from generation import generate_answer
 
-        return generate_answer(chunks, question, use_gate=self.use_gate)
+        if self.use_gate:
+            return generate_answer(chunks, question, use_gate=True)
+        return rag_pipeline.answer(question, chunks)
+
+
+class AppPipeline(StructuredPipeline):
+    """
+    Exactly what api.py runs: rag_pipeline with its defaults, including the
+    reranker at RERANKER_DIR when it is installed.  The answer model is
+    whatever LLM_BACKEND / OLLAMA_MODEL select.
+    """
+
+    name = "app"
+
+    def __init__(self):
+        import rag_pipeline
+
+        super().__init__(top_k=rag_pipeline.TOP_K, candidates=rag_pipeline.RERANK_CANDIDATES)
+        self.reranker = rag_pipeline.default_reranker()
 
 
 PIPELINES = {
     BaselinePipeline.name: BaselinePipeline,
     StructuredPipeline.name: StructuredPipeline,
+    AppPipeline.name: AppPipeline,
 }

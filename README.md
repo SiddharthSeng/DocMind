@@ -1,162 +1,84 @@
 # DocMind — RAG-based Document Q&A System
 
-A privacy-preserving **Retrieval-Augmented Generation (RAG)** system that lets you ask natural-language questions over your own documents (PDFs, TXT files, and DOCX files). DocMind retrieves the most relevant passages at query time and feeds them to a language model — giving you accurate, source-grounded answers without any fine-tuning.
+A privacy-preserving **Retrieval-Augmented Generation (RAG)** system that answers natural-language questions about your own documents (PDF, DOCX, TXT). Everything runs on your machine: an in-process embedder, a **fine-tuned reranker**, and an open LLM served by **Ollama** — no hosted LLM API required.
+
+**Answer accuracy: 93.5%** on a 261-question gold set over 8 documents (the previous pipeline scored 78.5% on the same set). See [Evaluation](#evaluation).
 
 ---
 
-## Tech Stack
+## How it works
 
-| Layer | Tool | Purpose |
-|---|---|---|
-| Text Extraction | `pdfplumber`, `python-docx` | Parse raw text from PDF, TXT, and DOCX files |
-| Tokenization | `tiktoken` | Split text into chunks by token count (not characters) |
-| Embedding | `fastembed` (`BAAI/bge-small-en-v1.5`, ONNX runtime) | Convert text chunks and queries into semantic vectors in-process. ~40–60 MB RAM — replaces sentence-transformers/PyTorch which caused OOM kills on Render's 512 MB free tier |
-| Vector Store | `ChromaDB` | Store, index, and retrieve embeddings with cosine similarity |
-| Keyword Retrieval | `rank-bm25` (BM25Okapi) | Hybrid retrieval: RRF fusion of embedding + keyword signals for chunk *ranking* |
-| Generation | Groq Cloud API (`openai/gpt-oss-20b`) | Answer generation from retrieved context. Free tier: 30 req/min, 14,400 req/day |
-| Backend API | `FastAPI` + `uvicorn` | Async HTTP API with per-session vector stores; blocking operations offloaded via `asyncio.to_thread` |
-| Frontend | `Streamlit` | Document upload and conversational UI |
-| Language | Python 3.11 | Core runtime |
+All of this lives in [`rag_pipeline.py`](rag_pipeline.py); `api.py` serves it and the evaluation harness scores the same code.
 
-> **Local dev alternative:** You can run the LLM locally via Ollama (`LLM_BACKEND=ollama`) instead of Groq. This is supported but not what runs in production. See Option B below.
+1. **Extraction** ([`data_ingestion.py`](data_ingestion.py) `extract_pages`) — PDFium (`pypdfium2`) for PDFs, which keeps reading order and word spacing on multi-column layouts; DOCX paragraphs *and tables* in document order; page numbers kept for citations.
+2. **Chunking** (`chunk_pages`) — whole sentences packed up to 300 tokens, counted with the embedder's own tokenizer so nothing overflows its 512-token window; new chunks start at section headings; each chunk is labelled with its section.
+3. **Hybrid retrieval** ([`vector_store.py`](vector_store.py)) — `BAAI/bge-small-en-v1.5` (fastembed, ONNX) embeddings in ChromaDB plus BM25 keyword scores, fused with Reciprocal Rank Fusion into 30 candidates.
+4. **Reranking** ([`reranker.py`](reranker.py)) — DocMind's fine-tuned cross-encoder reads the question with each candidate and keeps the best 5 (ONNX, no PyTorch).
+5. **Answering** ([`generation.py`](generation.py)) — the LLM answers only from the passages, cites its sources, and replies *"I don't have enough information in the provided documents to answer this question."* when they don't contain the answer. Cited file names are verified against the retrieved chunks.
 
----
+## Custom models
 
-## Project Structure
+Training runs on Google Colab (free T4) from the notebooks in [`training/`](training/); none of the evaluation documents are used for training.
+
+| Model | Notebook | Base | Training | Result |
+|---|---|---|---|---|
+| Reranker | `01_reranker_finetune.ipynb` | `cross-encoder/ms-marco-MiniLM-L-12-v2` | SQuAD 2.0 with *same-document* negatives (DocMind always searches inside one document), 146k pairs | right passage ranked 1st: 67.1% → 77.8% (base reranker 76.4%) |
+| Answer model | `02_answer_model_finetune.ipynb` | `Qwen2.5-7B-Instruct` (QLoRA → GGUF → Ollama) | DocMind's exact prompt format; grounded answers, refusals, tables | v1: 88.5% (base Qwen 90.4%) — learned terse fragments; **v2** (full-sentence targets, table examples) pending |
+
+The app's default answer model is `llama3.1` via Ollama, the best measured option so far. A fine-tuned answer model is registered with `ollama create docmind-qwen -f training/Modelfile` and selected with `OLLAMA_MODEL=docmind-qwen`.
+
+## Evaluation
+
+[`eval/`](eval/) scores **answer accuracy** — not just retrieval — on a gold set of 261 questions over 8 documents: three student reports (PDF/DOCX), the two demo policies, and three public PDFs (Qwen2.5 technical report, NIST AI 600-1, the two-column RAGAS paper). Question types: factoid, numeric, list, paraphrase, multi-hop, table, summary, and 34 unanswerable decoys that must be refused.
+
+| Pipeline (llama3.1 via Ollama) | Accuracy | Unanswerable refused | False refusals |
+|---|---|---|---|
+| Previous (pdfplumber, 500-token windows, cosine gate) | 78.5% | 97.1% | 15.9% |
+| Current (`rag_pipeline.py`) | **93.5%** | 100% | 1.8% |
+
+```bash
+python eval/run_eval.py --validate                     # check gold evidence exists in each document
+python eval/run_eval.py --pipeline app --retrieval-only # retrieval metrics, no LLM
+python eval/run_eval.py --pipeline app --llm-backend ollama
+python eval/run_eval.py --rescore eval/results/*.json   # re-score saved runs after a gold-set fix
+```
+
+The gold set, results and downloaded test PDFs are gitignored because they quote private documents. Scoring rules (normalised token recall, list/key-point/summary handling, refusal detection) are documented in [`eval/scoring.py`](eval/scoring.py).
+
+## Getting started
+
+> **Prerequisites:** Python 3.11+, [Ollama](https://ollama.com) with a model pulled (`ollama pull llama3.1`).
+
+```bash
+pip install -r requirements.txt
+cp .env.example .env          # defaults: EMBEDDING_BACKEND=bge_fastembed, LLM_BACKEND=ollama
+python -m uvicorn api:app --host 0.0.0.0 --port 8000
+python -m streamlit run app.py   # separate terminal
+```
+
+Upload a **PDF, DOCX or TXT** file in the sidebar to start a private session. To enable the reranker, run `training/01_reranker_finetune.ipynb` and unzip its output into `models/` (`models/reranker-finetuned/`); without it, retrieval skips the reranking step. `LLM_BACKEND=groq` with a `GROQ_API_KEY` still works if you prefer a hosted model.
+
+## Project structure
 
 ```
 DocMind - Rag Model/
-├── api.py                  # FastAPI backend: /upload, /chat, /health, demo session seeding
-├── app.py                  # Streamlit frontend: upload flow + demo shortcut
-├── data_ingestion.py       # Step 1: Load docs → extract text → chunk → save JSON
-├── vector_store.py         # Step 2: Embed chunks (fastembed/ONNX) → store in ChromaDB → expose retrieve()
-├── generation.py           # Step 3: Two-tier abstention gate + Groq LLM generation
-├── Dockerfile.backend      # Backend image (bge-small ONNX baked in, baked corpus included)
-├── Dockerfile.frontend     # Frontend image
-├── deployment_guide.md     # Full Render deployment walkthrough
-├── processed_chunks.json   # Baked SLA + Privacy Policy corpus (5 chunks)
-└── docs/                   # Drop your source PDFs, TXTs, or DOCX files here (gitignored)
+├── api.py              # FastAPI backend: /upload, /chat, /health, demo session
+├── app.py              # Streamlit frontend
+├── rag_pipeline.py     # The pipeline: index_documents(), retrieve(), answer()
+├── data_ingestion.py   # Extraction + sentence-aware chunking
+├── vector_store.py     # bge-small embeddings (ChromaDB) + BM25, RRF fusion
+├── reranker.py         # ONNX cross-encoder reranker
+├── generation.py       # Prompting, Ollama/Groq call, citation checks
+├── eval/               # Gold-set evaluation harness
+├── training/           # Colab notebooks for the reranker and answer model, Ollama Modelfile
+├── models/             # Exported models (gitignored)
+└── processed_chunks.json  # Baked demo corpus (DocMind's SLA + privacy policy)
 ```
-
----
-
-## How It Works
-
-### Retrieval
-
-DocMind uses **hybrid retrieval** combining two signals:
-
-1. **Dense embedding similarity** — `BAAI/bge-small-en-v1.5` via fastembed (ONNX) encodes both the query and each stored chunk into a semantic vector space. Cosine similarity measures how semantically close the query is to each chunk.
-2. **BM25 keyword matching** — sparse keyword overlap score using BM25Okapi.
-
-Both signals are fused into a single ranking using **Reciprocal Rank Fusion (RRF)**, which combines the rank positions (not the raw scores) from each retriever. This is more robust than either signal alone.
-
-### Two-Tier Abstention Gate
-
-Before calling the LLM, DocMind runs a two-tier gate to avoid generating hallucinated answers on off-topic queries:
-
-**Tier 1 — Hard floor (`ABSTAIN_THRESHOLD = 0.55`, cosine similarity):**
-If the top retrieved chunk's raw cosine similarity (`embed_score`) is below this threshold, the query is completely off-topic. The LLM is not called at all — DocMind abstains immediately.
-
-**Tier 2 — Context quality filter (`MIN_SIMILARITY_THRESHOLD = 0.60`, cosine similarity):**
-After passing the hard floor, any chunk with `embed_score < 0.60` is dropped from the LLM context (too weak to ground a reliable answer). If no chunk passes this filter → a "weak match" abstention is returned without calling the LLM.
-
-> **Important design note:** The gate uses raw **cosine similarity** (`embed_score`), not fused RRF scores. RRF scores are rank-based and compress into a very narrow band (~0.13–0.18) on small corpora, regardless of actual semantic relevance. Cosine similarity retains a meaningful spread that discriminates in-domain from OOD queries.
->
-> **The gate is a coarse pre-filter for obvious noise.** The LLM's own system-prompt-driven abstention is the primary defense against domain-adjacent OOD queries that share vocabulary with the corpus (e.g., a query about DocMind that isn't answered in the SLA). This is an intentional two-layer design: retrieval-level gating catches garbage-domain queries; LLM-level abstention catches residual vocabulary-adjacent queries. Both layers are empirically verified working.
-
-### Post-Generation Hallucination Checks
-
-After every LLM response:
-- **Citation verification:** Every source file the model cites is cross-checked against the retrieved chunks. Any hallucinated citation (a filename not actually in context) is stripped and flagged.
-- **Confidence scoring:** Derived from raw cosine similarity of the retrieved chunks — not from the LLM's self-reported certainty, which is unreliable.
-
----
-
-## Getting Started
-
-### Option A — Try the live demo (no setup needed)
-
-Deploy to Render (see `deployment_guide.md`) and click **"🚀 Try the demo"** in the sidebar. DocMind's own SLA and Privacy Policy are baked into the Docker image and instantly available without uploading anything.
-
-Example questions to try:
-- *"What uptime does DocMind guarantee?"*
-- *"Who are DocMind's data sub-processors?"*
-- *"What service credit do I get if uptime drops below 95%?"*
-
-> **A note on the hosted demo:** The live instance runs on Render's free tier (512 MB RAM, shared infrastructure). The pipeline has been tested locally at ~277 MB peak, well within the limit — but free-tier environments share physical hosts and can occasionally exhibit higher latency or fail a request under load conditions outside the app's control. If the hosted demo is slow or returns an error, **Option B (local setup) is the recommended way to evaluate the project** — it runs reliably and is straightforward to get running in under five minutes with the steps below. The retrieval and generation pipeline itself is not the source of any instability; this is purely a free-tier hosting constraint.
-
-### Option B — Local development
-
-> **Prerequisites:** Python 3.11+. Dependencies install via `pip install -r requirements.txt` (~2–3 minutes first time, mainly downloading the fastembed ONNX model weights ~40 MB).
-
-```bash
-# 1. Install dependencies
-pip install -r requirements.txt
-
-# 2. Set environment variables
-cp .env.example .env
-# Edit .env — add GROQ_API_KEY and set LLM_BACKEND=groq
-# (or set LLM_BACKEND=ollama and run `ollama serve` locally)
-
-# 3. Start the backend
-python -m uvicorn api:app --host 0.0.0.0 --port 8000
-
-# 4. Start the frontend (separate terminal)
-python -m streamlit run app.py
-```
-
-Upload any **PDF, TXT, or DOCX** file via the sidebar to start a private session. Each upload creates an isolated session — your data is never mixed with other users' documents.
-
-> **Note:** The backend loads environment variables from `.env` via `python-dotenv`. Ensure `.env` contains `LLM_BACKEND=groq` (and a valid `GROQ_API_KEY`) or `LLM_BACKEND=ollama` (with Ollama running locally). If `LLM_BACKEND` is not set, it defaults to `ollama`. If you are not running Ollama locally, also set `EMBEDDING_BACKEND=bge_fastembed` — otherwise the embedding backend defaults to `ollama` and the backend will fail to start. The `.env.example` file lists all configurable variables.
-
-### Option C — Run the pipeline directly (scripting / evaluation)
-
-```bash
-# Chunk your documents
-python data_ingestion.py
-
-# Build the vector store and test retrieval
-python vector_store.py
-
-# Evaluate retrieval quality on the test suite
-python evaluate.py
-```
-
----
-
-## Supported File Formats
-
-| Format | Extension | Library |
-|---|---|---|
-| PDF | `.pdf` | `pdfplumber` |
-| Plain Text | `.txt` | built-in |
-| Word Document | `.docx` | `python-docx` |
-
-The pipeline is **format-agnostic after extraction** — once text is extracted from any format, chunking, embedding, retrieval, and generation are identical regardless of source format.
-
----
 
 ## Deployment
 
-DocMind runs as **two separate Docker-based Web Services on Render**:
-- **Backend** (`Dockerfile.backend`): FastAPI + ChromaDB + fastembed (ONNX). ~150–180 MB RAM steady-state.
-- **Frontend** (`Dockerfile.frontend`): Streamlit UI. Minimal RAM.
-
-The frontend connects to the backend via the `API_BASE_URL` environment variable. See `deployment_guide.md` for the full setup walkthrough.
-
----
-
-## ⚙️ Build Status
-
-- [x] **Step 1 — Data Ingestion:** Load PDF/TXT/DOCX files, chunk by token count with overlap, export to JSON
-- [x] **Step 2 — Vector Retrieval:** Embed chunks with `BAAI/bge-small-en-v1.5` (fastembed/ONNX), store in ChromaDB, hybrid RRF retrieval (embedding + BM25)
-- [x] **Step 3 — Generation:** Groq Cloud API (`openai/gpt-oss-20b`) for production; Ollama locally. Calibrated two-tier abstention gate (cosine-similarity-based, decoupled from RRF ranking) + post-generation citation verification
-- [x] **Step 4 — UI:** Streamlit frontend with PDF/TXT/DOCX upload, demo shortcut, session management, and confidence display. FastAPI backend with per-session vector stores, seeded demo session, and async offloading of all blocking operations
-
----
+`Dockerfile.backend` / `Dockerfile.frontend` deploy to Render (see `deployment_guide.md`). The free tier's 512 MB of RAM cannot host a 7B LLM or comfortably add the reranker, so a free-tier deployment uses `LLM_BACKEND=groq` and runs without `models/`. The full self-hosted stack needs a machine that can run Ollama (≈6 GB of GPU or system memory for a 7B Q4 model).
 
 ## Why not just use LangChain?
 
-DocMind is intentionally built from scratch using the raw libraries. The goal is to understand exactly what happens at every step — chunking strategy, embedding model choice, hybrid retrieval fusion, abstention thresholds — rather than hiding it behind a framework abstraction. This makes it easier to debug, tune, and explain in interviews.
-
+DocMind is intentionally built from the raw libraries so every step — extraction, chunking, retrieval fusion, reranking, prompting — can be measured and explained, rather than hidden behind a framework abstraction.
