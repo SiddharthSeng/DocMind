@@ -332,6 +332,30 @@ def save(report: dict) -> Path:
     return base
 
 
+def rescore(paths: list[str]) -> None:
+    """
+    Re-applies scoring.score_answer to the answers stored in saved runs, using
+    the current gold set.  Gold fixes (e.g. a missing acceptable phrasing) then
+    apply to every run equally, without regenerating any answers.
+    """
+    from scoring import score_answer
+
+    gold = {item["id"]: item for item in load_gold(GOLD_PATH)}
+    for path in paths:
+        report = json.loads(Path(path).read_text(encoding="utf-8"))
+        if report["retrieval_only"]:
+            print(f"{Path(path).name}: retrieval-only run, nothing to re-score")
+            continue
+        changed = 0
+        for row in report["rows"]:
+            new = score_answer(gold[row["id"]], row["answer"])
+            changed += new["correct"] != row["correct"]
+            row.update(new)
+        report["metrics"] = aggregate(report["rows"], retrieval_only=False)
+        print(f"\n### {Path(path).name}  ({changed} verdict(s) changed by the current gold set)")
+        print_summary(report)
+
+
 def main() -> None:
     if sys.platform == "win32":
         sys.stdout.reconfigure(encoding="utf-8")
@@ -348,7 +372,13 @@ def main() -> None:
                         help="override LLM_BACKEND from .env for this run")
     parser.add_argument("--opt", action="append", default=[], metavar="KEY=VALUE",
                         help="pipeline constructor option, repeatable (e.g. --opt top_k=8)")
+    parser.add_argument("--rescore", nargs="+", metavar="RESULTS_JSON",
+                        help="re-score saved runs against the current gold set (after a gold fix), no LLM calls")
     args = parser.parse_args()
+
+    if args.rescore:
+        rescore(args.rescore)
+        return
 
     # Must be set before vector_store / generation are imported (both read env
     # at import time); load_dotenv() never overrides values already set.
