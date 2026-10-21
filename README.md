@@ -1,6 +1,6 @@
 # DocMind — RAG-based Document Q&A System
 
-A privacy-preserving **Retrieval-Augmented Generation (RAG)** system that answers natural-language questions about your own documents (PDF, DOCX, TXT). Everything runs on your machine: an in-process embedder, a **fine-tuned reranker**, and an open LLM served by **Ollama** — no hosted LLM API required.
+A privacy-preserving **Retrieval-Augmented Generation (RAG)** system that answers natural-language questions about your own documents (PDF, DOCX, TXT). Everything runs on your machine: an in-process embedder, DocMind's own **fine-tuned reranker**, and an open LLM served by **Ollama** — no hosted LLM API required.
 
 **Answer accuracy: 93.5%** on a 261-question gold set over 8 documents (the previous pipeline scored 78.5% on the same set). See [Evaluation](#evaluation).
 
@@ -23,9 +23,9 @@ Training runs on Google Colab (free T4) from the notebooks in [`training/`](trai
 | Model | Notebook | Base | Training | Result |
 |---|---|---|---|---|
 | Reranker | `01_reranker_finetune.ipynb` | `cross-encoder/ms-marco-MiniLM-L-12-v2` | SQuAD 2.0 with *same-document* negatives (DocMind always searches inside one document), 146k pairs | right passage ranked 1st: 67.1% → 77.8% (base reranker 76.4%) |
-| Answer model | `02_answer_model_finetune.ipynb` | `Qwen2.5-7B-Instruct` (QLoRA → GGUF → Ollama) | DocMind's exact prompt format; grounded answers, refusals, tables | v1: 88.5% (base Qwen 90.4%) — learned terse fragments; **v2** (full-sentence targets, table examples) pending |
+| Answer model | `02_answer_model_finetune.ipynb` | `Qwen2.5-7B-Instruct` (QLoRA → GGUF → Ollama) | DocMind's exact prompt format; grounded answers, refusals, tables (~2,000 examples, free T4) | not adopted — v1 (span targets) 88.5–90.0%, v2 (sentence targets) 84.7%, both below the untuned base (90.4%) |
 
-The app's default answer model is `llama3.1` via Ollama, the best measured option so far. A fine-tuned answer model is registered with `ollama create docmind-qwen -f training/Modelfile` and selected with `OLLAMA_MODEL=docmind-qwen`.
+**Why the answer model wasn't adopted.** Both fine-tunes made a strong instruction model worse at reading the passages. v1, trained on SQuAD/HotpotQA's bare answer spans, answered in fragments and dropped the second half of two-part questions. v2, trained to answer with the passage sentence that contains the answer, learned to copy *a relevant-looking* sentence — often not the one with the answer. The app therefore uses `llama3.1` via Ollama (93.5%). A next attempt would need teacher-written answers (a stronger model writing a natural sentence around the gold span) and more GPU time than the free tier gives; `ollama create … -f training/Modelfile` registers any exported GGUF, and `OLLAMA_MODEL` selects it.
 
 ## Evaluation
 
